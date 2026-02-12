@@ -252,7 +252,7 @@ def get_responses(survey_id: str, admin_code: str = Query(...), db: Session = De
 @app.get("/api/admin/surveys/{survey_id}/dashboard")
 def get_dashboard(survey_id: str, admin_code: str = Query(...), db: Session = Depends(get_db)):
     survey = _get_survey_auth(survey_id, admin_code, db)
-    respondents = db.query(Respondent).filter(Respondent.survey_id == survey_id).all()
+    respondents = db.query(Respondent).filter(Respondent.survey_id == survey_id).order_by(Respondent.submitted_at).all()
 
     if not respondents:
         return {
@@ -353,9 +353,11 @@ def export_pptx_endpoint(survey_id: str, admin_code: str = Query(...), db: Sessi
     recommendations_prose = generate_recommendations_prose(data["recommendations"])
     buf = export_pptx(
         survey={"company_name": survey.company_name},
+        respondents_data=data["respondents_data"],
         dim_scores_agg=data["dim_scores"],
         kpis=data["kpis"],
         summary=data["summary"],
+        recommendations=data["recommendations"],
         recommendations_prose=recommendations_prose,
     )
     return StreamingResponse(

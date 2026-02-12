@@ -619,11 +619,13 @@
                 return;
             }
 
-            // Columns: Respondentes
-            data.respondents.forEach(r => {
+            // Colunas: respondentes por ordem de envio (R_001, R_002, ... R_999)
+            const padLen = Math.max(3, String(data.respondents.length).length);
+            data.respondents.forEach((r, i) => {
                 const th = document.createElement('th');
-                th.textContent = r.display_id;
+                th.textContent = 'R_' + String(i + 1).padStart(padLen, '0');
                 th.style.textAlign = 'center';
+                th.title = 'Respondente ' + (i + 1) + (r.display_id ? ' (ID: ' + r.display_id + ')' : '');
                 thead.appendChild(th);
             });
 
