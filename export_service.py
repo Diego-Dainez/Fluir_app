@@ -4,6 +4,7 @@ Fluir — Servico de Exportacao (Excel + PPT)
 
 import io
 from datetime import datetime
+from pathlib import Path
 
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -34,6 +35,12 @@ THIN_BORDER = Border(
 STATUS_FILL = {"green": FILL_GREEN, "yellow": FILL_YELLOW, "red": FILL_RED}
 STATUS_LABEL = {"green": "Favorável", "yellow": "Atenção", "red": "Crítico"}
 PRIORITY_LABEL = {"imediata": "Ação Imediata", "curto": "Curto Prazo", "medio": "Médio Prazo"}
+
+# Formato 16:9 (widescreen)
+SLIDE_WIDTH_16_9 = Inches(13.333)
+SLIDE_HEIGHT_16_9 = Inches(7.5)
+LOGO_SIZE_INCHES = 1.0
+IMG_DIR = Path(__file__).resolve().parent / "static" / "img"
 
 
 # ══════════════════════════════════════════════
@@ -213,31 +220,42 @@ def export_excel(survey, respondents_data, dim_scores_agg, kpis, summary, recomm
 # PPT EXPORT
 # ══════════════════════════════════════════════
 
-def _add_title_slide(prs: Presentation, company: str, date: str) -> None:
-    """Adiciona slide de capa."""
+def _add_title_slide(prs: Presentation, company: str, date: str, total_respondents: int = 0) -> None:
+    """Adiciona slide de capa com wallpaper, logo e textos."""
     slide = prs.slides.add_slide(prs.slide_layouts[6])
-    title_box = slide.shapes.add_textbox(Inches(0.5), Inches(1.5), Inches(9), Inches(1))
+    w = prs.slide_width
+    h = prs.slide_height
+    wallpaper_path = IMG_DIR / "wallpaper_PPT.png"
+    logo_path = IMG_DIR / "fluir_logo.png"
+    if wallpaper_path.exists():
+        slide.shapes.add_picture(str(wallpaper_path), 0, 0, w, h)
+    if logo_path.exists():
+        logo_size = Inches(LOGO_SIZE_INCHES)
+        logo_left = Inches(13.333 - LOGO_SIZE_INCHES)
+        slide.shapes.add_picture(str(logo_path), logo_left, Inches(0.2), logo_size, logo_size)
+    title_box = slide.shapes.add_textbox(Inches(0.5), Inches(2), Inches(9), Inches(1))
     t = title_box.text_frame.paragraphs[0]
     t.text = "Fluir"
     t.font.size = Pt(44)
     t.font.bold = True
     t.font.color.rgb = RGBColor(0x0F, 0x4C, 0x75)
-    tb = slide.shapes.add_textbox(Inches(0.5), Inches(2.2), Inches(9), Inches(1))
+    tb = slide.shapes.add_textbox(Inches(0.5), Inches(2.7), Inches(9), Inches(1))
     p = tb.text_frame.paragraphs[0]
     p.text = "Relatorio de Diagnostico Psicossocial"
     p.font.size = Pt(18)
     p.font.color.rgb = RGBColor(0x32, 0x82, 0xB8)
-    tb2 = slide.shapes.add_textbox(Inches(0.5), Inches(3), Inches(9), Inches(1))
-    tb2.text_frame.paragraphs[0].text = f"Organizacao: {company}  |  Data: {date}"
+    tb2 = slide.shapes.add_textbox(Inches(0.5), Inches(3.5), Inches(9), Inches(1))
+    resp_text = f" | {total_respondents} respondentes" if total_respondents else ""
+    tb2.text_frame.paragraphs[0].text = f"Organizacao: {company}  |  Data: {date}{resp_text}"
     tb2.text_frame.paragraphs[0].font.size = Pt(14)
 
 
 def _add_table_slide(prs: Presentation, title_text: str, headers: list, rows: list) -> None:
-    """Adiciona slide com tabela."""
+    """Adiciona slide com tabela (formato 16:9)."""
     slide = prs.slides.add_slide(prs.slide_layouts[6])
     left = Inches(0.5)
     top = Inches(1)
-    width = Inches(9)
+    width = Inches(12)
     height = Inches(1)
     title_box = slide.shapes.add_textbox(left, Inches(0.3), width, Inches(0.6))
     title_box.text_frame.paragraphs[0].text = title_text
@@ -257,43 +275,88 @@ def _add_table_slide(prs: Presentation, title_text: str, headers: list, rows: li
                 table.cell(r_idx, c_idx).text = str(val)
 
 
-def export_pptx(survey, dim_scores_agg, kpis, summary, recommendations_prose) -> io.BytesIO:
+def export_pptx(
+    survey,
+    respondents_data,
+    dim_scores_agg,
+    kpis,
+    summary,
+    recommendations,
+    recommendations_prose,
+) -> io.BytesIO:
     """Gera apresentacao PowerPoint executiva e retorna BytesIO.
 
-    Slides: capa, KPIs, resumo, dimensoes, recomendacoes (por prazo), rodape.
+    Conteudo completo: capa, KPIs, resumo, dimensoes, respostas individuais,
+    recomendacoes estruturadas, recomendacoes em prosa (IA), rodape.
+    Formato 16:9. Capa com wallpaper e logo.
     """
     prs = Presentation()
+    prs.slide_width = SLIDE_WIDTH_16_9
+    prs.slide_height = SLIDE_HEIGHT_16_9
+
     company = survey.get("company_name", "Empresa")
     date_str = datetime.now().strftime("%d/%m/%Y")
-    _add_title_slide(prs, company, date_str)
+    total_resp = summary.get("total", 0) or len(respondents_data)
+    _add_title_slide(prs, company, date_str, total_resp)
+
     kpi_headers = ["Indicador", "Valor", "Status"]
     kpi_rows = [[kpi["label"], f"{kpi['value']:.2f}", kpi["status"]] for kpi in kpis.values()]
     _add_table_slide(prs, "Indicadores-Chave (KPIs)", kpi_headers, kpi_rows)
+
     slide = prs.slides.add_slide(prs.slide_layouts[6])
-    box = slide.shapes.add_textbox(Inches(0.5), Inches(1), Inches(9), Inches(2))
+    box = slide.shapes.add_textbox(Inches(0.5), Inches(1), Inches(12), Inches(1.5))
     p = box.text_frame.paragraphs[0]
     p.text = f"Resumo: {summary.get('green', 0)} favoraveis | {summary.get('yellow', 0)} atencao | {summary.get('red', 0)} criticas"
     p.font.size = Pt(18)
-    dim_headers = ["Dimensao", "Score", "Status", "Tipo", "Categoria"]
-    dim_rows = [[d["name"], f"{d['score']:.2f}", STATUS_LABEL.get(d["status"], ""), "Risco" if d["type"] == "risk" else "Recurso", d["category"]] for d in dim_scores_agg]
+
+    dim_headers = ["#", "Dimensao", "Score", "Status", "Tipo", "Categoria", "Descricao"]
+    dim_rows = [
+        [idx, d["name"], f"{d['score']:.2f}", STATUS_LABEL.get(d["status"], ""),
+         "Risco" if d["type"] == "risk" else "Recurso", d["category"], (d.get("description") or "")[:50]]
+        for idx, d in enumerate(dim_scores_agg, 1)
+    ]
     _add_table_slide(prs, "Analise por Dimensao", dim_headers, dim_rows)
+
+    if respondents_data and DIMENSIONS:
+        dim_ids = list(DIMENSIONS.keys())
+        resp_headers = ["ID"] + [DIMENSIONS[d]["name"][:8] for d in dim_ids]
+        resp_rows = []
+        for r in respondents_data:
+            row = [r.get("display_id", "")]
+            for dim_id in dim_ids:
+                s = r.get("scores", {}).get(dim_id)
+                row.append(f"{s:.2f}" if s is not None else "-")
+            resp_rows.append(row)
+        if resp_rows:
+            _add_table_slide(prs, "Respostas Individuais", resp_headers, resp_rows)
+
+    if recommendations:
+        rec_headers = ["#", "Prioridade", "Titulo", "Descricao"]
+        rec_rows = [
+            [idx, PRIORITY_LABEL.get(r.get("priority", ""), r.get("priority", "")), r.get("title", ""), (r.get("description") or "")[:80]]
+            for idx, r in enumerate(recommendations, 1)
+        ]
+        _add_table_slide(prs, "Recomendacoes Estruturadas", rec_headers, rec_rows)
+
     sections = [("Acoes imediatas", "imediata"), ("Curto prazo", "curto_prazo"), ("Medio prazo", "medio_prazo")]
     for title, key in sections:
         text = (recommendations_prose or {}).get(key) or ""
         if text.strip():
             slide = prs.slides.add_slide(prs.slide_layouts[6])
-            tit_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(9), Inches(0.7))
+            tit_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(12), Inches(0.7))
             tit_box.text_frame.paragraphs[0].text = title
             tit_box.text_frame.paragraphs[0].font.size = Pt(24)
             tit_box.text_frame.paragraphs[0].font.bold = True
-            tx = slide.shapes.add_textbox(Inches(0.5), Inches(1.2), Inches(9), Inches(5))
+            tx = slide.shapes.add_textbox(Inches(0.5), Inches(1.2), Inches(12), Inches(5))
             tx.text_frame.word_wrap = True
             tx.text_frame.paragraphs[0].text = text.strip()[:2000]
             tx.text_frame.paragraphs[0].font.size = Pt(12)
+
     footer_slide = prs.slides.add_slide(prs.slide_layouts[6])
-    fb = footer_slide.shapes.add_textbox(Inches(0.5), Inches(2), Inches(9), Inches(2))
+    fb = footer_slide.shapes.add_textbox(Inches(0.5), Inches(2), Inches(12), Inches(2))
     fb.text_frame.paragraphs[0].text = "Fluir — Bem-estar que move resultados. COPSOQ II. Documento confidencial."
     fb.text_frame.paragraphs[0].font.size = Pt(14)
+
     buf = io.BytesIO()
     prs.save(buf)
     buf.seek(0)
