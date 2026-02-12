@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluir — Painel Administrativo</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="admin-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <img src="/static/img/fluir_logo.png" alt="Fluir">
+            <h2>Fluir</h2>
+            <span>Painel de Gestao</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-link active" data-tab="surveys" onclick="switchTab('surveys')">
+                <span class="nav-icon">📋</span> Pesquisas
+            </a>
+            <a href="#" class="nav-link" data-tab="dashboard" onclick="switchTab('dashboard')" id="nav-dashboard"
+                style="display:none;">
+                <span class="nav-icon">📊</span> Dashboard
+            </a>
+            <a href="#" class="nav-link" data-tab="responses" onclick="switchTab('responses')" id="nav-responses"
+                style="display:none;">
+                <span class="nav-icon">👥</span> Respostas
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="btn btn-ghost w-full" onclick="logout()">
+                <span class="nav-icon">🚪</span> Sair
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="admin-main">
+        <!-- HEADER -->
+        <header class="admin-header">
+            <h1 id="pageTitle">Pesquisas</h1>
+            <div class="admin-header-actions" id="headerActions">
+                <button class="btn btn-primary" onclick="openNewSurveyModal()">+ Nova Pesquisa</button>
+            </div>
+        </header>
+
+        <!-- TABS -->
+
+        <!-- TAB: SURVEYS LIST -->
+        <div id="tab-surveys" class="tab-content active">
+            <div id="surveysList" class="kpi-grid"
+                style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+                <!-- Survey cards injected here -->
+            </div>
+            <div id="emptyState" class="empty-state hidden">
+                <span class="empty-icon">📭</span>
+                <h3>Nenhuma pesquisa encontrada</h3>
+                <p>Crie sua primeira pesquisa para começar.</p>
+            </div>
+        </div>
+
+        <!-- TAB: DASHBOARD -->
+        <div id="tab-dashboard" class="tab-content">
+            <div class="survey-selector" id="dashSelector">
+                <!-- Survey chips injected here -->
+            </div>
+
+            <!-- Summary Text Recommendations -->
+            <div class="recs-consolidated" id="recsBlock">
+                <h3>Análise e Recomendações (IA)</h3>
+                <div id="recsContent">
+                    <p class="text-muted">Aguardando dados suficientes para análise...</p>
+                </div>
+            </div>
+
+            <!-- KPIs -->
+            <div class="kpi-grid" id="kpiGrid">
+                <!-- KPI cards injected here -->
+            </div>
+
+            <!-- Charts -->
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <h3>Panorama Geral</h3>
+                    <canvas id="radarChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Comparativo por Dimensao</h3>
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+            <div class="admin-card mt-4" id="dimensionsTableCard">
+                <h3>Dimensoes</h3>
+                <div class="table-container">
+                    <table class="admin-table" id="dimensionsTable">
+                        <thead><tr><th>#</th><th>Dimensao</th><th>Score</th><th>Status</th><th>Tipo</th><th>Categoria</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: RESPONSES (Transposed) -->
+        <div id="tab-responses" class="tab-content">
+            <div class="admin-card">
+                <div class="table-container">
+                    <table class="admin-table" id="responsesTable">
+                        <thead>
+                            <tr>
+                                <th>Dimensao / Categoria</th>
+                                <th>Media Geral</th>
+                                <!-- Respondent IDs inserted here -->
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Rows inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODALS -->
+
+    <!-- New Survey Modal -->
+    <div class="modal-overlay" id="newSurveyModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Nova Pesquisa</h3>
+                <button class="modal-close" onclick="closeModal('newSurveyModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="newSurveyForm">
+                    <div class="form-group">
+                        <label class="admin-label">Nome da Empresa / Cliente</label>
+                        <input type="text" class="admin-input" id="newCompanyName" required
+                            placeholder="Ex: Tech Solutions Ltda">
+                    </div>
+                    <div class="flex gap-2 justify-between mt-3">
+                        <button type="button" class="btn btn-ghost"
+                            onclick="closeModal('newSurveyModal')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Criar Pesquisa</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div class="modal-overlay" id="qrModal">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>Compartilhar Pesquisa</h3>
+                <button class="modal-close" onclick="closeModal('qrModal')">&times;</button>
+            </div>
+            <div class="modal-body qr-container">
+                <img id="qrImage" src="" alt="QR Code">
+                <p class="mb-2 text-muted">Acesse pelo link:</p>
+                <div class="qr-url" id="qrUrl">...</div>
+                <button class="btn btn-outline w-full mt-3" onclick="copyLink()">Copiar Link</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden">
+        <span id="toastIcon">INFO</span>
+        <span id="toastMsg">Mensagem</span>
+    </div>
+
+    <script>
+        function escapeHtml(str) {
+            if (str == null) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // STATE
+        let surveys = [];
+        let currentSurveyId = null;
+        let dashboardData = null;
+        let radarChart = null;
+        let barChart = null;
+        const ADMIN_CODE = sessionStorage.getItem('fluir_admin_code');
+
+        if (!ADMIN_CODE) window.location.href = '/';
+
+        // INIT
+        async function init() {
+            await loadSurveys();
+            if (surveys.length > 0) {
+                renderSurveysList();
+                // If stored survey selected, load it
+                const storedId = sessionStorage.getItem('fluir_selected_survey');
+                if (storedId && surveys.find(s => s.id === storedId)) {
+                    selectSurvey(storedId, false);
+                }
+            } else {
+                document.getElementById('emptyState').classList.remove('hidden');
+            }
+        }
+
+        async function loadSurveys() {
+            try {
+                const res = await fetch(`/api/admin/surveys?admin_code=${ADMIN_CODE}`);
+                if (res.ok) surveys = await res.json();
+            } catch (err) { console.error(err); }
+        }
+
+        // TABS
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            document.querySelector(`.nav-link[data-tab="${tabId}"]`).classList.add('active');
+
+            // Adjust header actions based on tab
+            const actions = document.getElementById('headerActions');
+            if (tabId === 'surveys') {
+                document.getElementById('pageTitle').textContent = 'Pesquisas';
+                actions.innerHTML = '<button class="btn btn-primary" onclick="openNewSurveyModal()">+ Nova Pesquisa</button>';
+            } else if (tabId === 'dashboard') {
+                document.getElementById('pageTitle').textContent = 'Dashboard';
+                if (currentSurveyId) {
+                    actions.innerHTML = `
+                        <button class="btn btn-secondary" onclick="exportReport('${currentSurveyId}', 'pdf')">PDF</button>
+                        <button class="btn btn-secondary" onclick="exportReport('${currentSurveyId}', 'excel')">Excel</button>
+                        <button class="btn btn-secondary" onclick="exportReport('${currentSurveyId}', 'docx')">Texto</button>
+                    `;
+                    loadDashboard(currentSurveyId);
+                }
+            } else if (tabId === 'responses') {
+                document.getElementById('pageTitle').textContent = 'Respostas Individuais';
+                actions.innerHTML = '';
+                if (!currentSurveyId) {
+                    renderTransposedTable(null);
+                } else if (dashboardData && dashboardData.company_name) {
+                    renderTransposedTable(dashboardData);
+                } else {
+                    renderTransposedTable({ loading: true });
+                    loadDashboard(currentSurveyId);
+                }
+            }
+        }
+
+        // SURVEYS LIST
+        function renderSurveysList() {
+            const container = document.getElementById('surveysList');
+            container.innerHTML = surveys.map(s => `
+                <div class="admin-card" onclick="selectSurveyAndGo('${escapeHtml(s.id)}')" style="cursor:pointer; border-left: 4px solid ${s.is_active ? 'var(--green)' : 'var(--red)'}">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="flex items-center gap-2" style="flex:1; min-width:0;">
+                            <h3 id="company-name-${escapeHtml(s.id)}" style="margin:0; font-size: 1.1rem; color: var(--primary-800);">${escapeHtml(s.company_name)}</h3>
+                            <button class="btn btn-ghost btn-sm" style="padding:2px 6px; font-size:0.75rem;" onclick="event.stopPropagation(); startEditCompanyName('${escapeHtml(s.id)}')" title="Editar nome">Editar</button>
+                        </div>
+                        <div class="toggle-switch" onclick="event.stopPropagation(); toggleSurveyActive('${escapeHtml(s.id)}', ${s.is_active})">
+                            <input type="checkbox" ${s.is_active ? 'checked' : ''}>
+                            <span class="toggle-slider"></span>
+                        </div>
+                    </div>
+                    <div class="text-muted" style="font-size: 0.9rem; margin-bottom: 12px;">
+                        Criada em: ${new Date(s.created_at).toLocaleDateString()}
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="badge ${s.respondent_count > 0 ? 'badge-primary' : 'badge-secondary'}">
+                            ${s.respondent_count} respondentes
+                        </span>
+                        <span style="font-size: 0.8rem; font-family:var(--font-mono); background: var(--bg-hover); padding: 4px 8px; border-radius: 4px;">
+                            ${escapeHtml(s.code)}
+                        </span>
+                    </div>
+                    <div class="flex gap-2 mt-3" onclick="event.stopPropagation();">
+                        <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); showQrModal('${escapeHtml(s.id)}')">Compartilhar</button>
+                        <button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="event.stopPropagation(); confirmDeleteSurvey('${escapeHtml(s.id)}')">Excluir</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function startEditCompanyName(id) {
+            const s = surveys.find(x => x.id === id);
+            if (!s) return;
+            const h3 = document.getElementById('company-name-' + id);
+            if (!h3 || h3.querySelector('input')) return;
+            const parent = h3.parentElement;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'admin-input';
+            input.style = 'font-size:1.1rem; padding:4px 8px; width:100%;';
+            input.value = s.company_name;
+            input.onblur = () => saveCompanyName(id, input, h3);
+            input.onkeydown = (e) => { if (e.key === 'Enter') input.blur(); if (e.key === 'Escape') { input.value = s.company_name; input.replaceWith(h3); } };
+            h3.replaceWith(input);
+            input.focus();
+        }
+        async function saveCompanyName(id, input, origH3) {
+            const newName = input.value.trim();
+            const s = surveys.find(x => x.id === id);
+            if (!s || !newName || newName === s.company_name) { input.replaceWith(origH3); return; }
+            try {
+                const res = await fetch('/api/admin/surveys/' + id + '/settings?admin_code=' + ADMIN_CODE, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ company_name: newName })
+                });
+                if (res.ok) {
+                    s.company_name = newName;
+                    origH3.textContent = newName;
+                    showToast('Nome atualizado.', 'success');
+                }
+            } catch (e) { console.error(e); }
+            input.replaceWith(origH3);
+        }
+
+        async function confirmDeleteSurvey(id) {
+            const s = surveys.find(x => x.id === id);
+            const companyName = s ? s.company_name : 'esta pesquisa';
+            if (!confirm('Tem certeza que deseja excluir a pesquisa "' + companyName.replace(/"/g, '\\"') + '"? Esta acao nao pode ser desfeita.')) return;
+            try {
+                const res = await fetch('/api/admin/surveys/delete?survey_id=' + encodeURIComponent(id) + '&admin_code=' + encodeURIComponent(ADMIN_CODE), { method: 'POST' });
+                if (res.ok) {
+                    showToast('Pesquisa excluida.', 'success');
+                    if (currentSurveyId === id) {
+                        currentSurveyId = null;
+                        dashboardData = null;
+                        switchTab('surveys');
+                    }
+                    await loadSurveys();
+                    renderSurveysList();
+                } else {
+                    const errText = await res.text();
+                    let msg = 'Erro ao excluir.';
+                    try {
+                        const errJson = JSON.parse(errText);
+                        if (errJson.detail) msg = (Array.isArray(errJson.detail) ? errJson.detail[0]?.msg : errJson.detail) || msg;
+                    } catch (_) {}
+                    showToast(msg, 'error');
+                }
+            } catch (e) { console.error(e); showToast('Erro ao excluir.', 'error'); }
+        }
+
+        async function toggleSurveyActive(id, currentStatus) {
+            try {
+                // Call API to toggle (assuming endpoint exists, or create separate one)
+                // For now, let's mock it or update locally if API not ready
+                // Assuming PUT /surveys/{id} updates fields
+                const res = await fetch(`/api/admin/surveys/${id}/settings?admin_code=${ADMIN_CODE}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_active: !currentStatus })
+                });
+                if (res.ok) {
+                    showToast('Status atualizado!', 'success');
+                    await loadSurveys();
+                    renderSurveysList();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function selectSurveyAndGo(id) {
+            selectSurvey(id, true);
+        }
+
+        function selectSurvey(id, navigate = true) {
+            currentSurveyId = id;
+            sessionStorage.setItem('fluir_selected_survey', id);
+
+            // Show tabs
+            document.getElementById('nav-dashboard').style.display = 'flex';
+            document.getElementById('nav-responses').style.display = 'flex';
+
+            if (navigate) switchTab('dashboard');
+        }
+
+        // DASHBOARD LOAD
+        async function loadDashboard(id) {
+            try {
+                // Loading state para a seção de análise de IA
+                document.getElementById('recsContent').innerHTML = '<p class="text-muted">Gerando análise com IA...</p>';
+
+                const res = await fetch(`/api/admin/surveys/${id}/dashboard?admin_code=${ADMIN_CODE}`);
+                if (!res.ok) return;
+                dashboardData = await res.json();
+
+                renderKPIs(dashboardData.kpis);
+                renderRecommendationsConsolidated(dashboardData.recommendations_prose, dashboardData.recommendations);
+                renderCharts(dashboardData);
+                renderTransposedTable(dashboardData);
+            } catch (err) { console.error(err); }
+        }
+
+        function renderKPIs(kpis) {
+            const container = document.getElementById('kpiGrid');
+            container.innerHTML = Object.values(kpis).map(k => `
+                <div class="kpi-card ${escapeHtml(k.color)}">
+                    <div class="kpi-label">${escapeHtml(k.label)}</div>
+                    <div class="kpi-value ${escapeHtml(k.color)}">${escapeHtml(String(k.value))}</div>
+                    <div class="kpi-status">${escapeHtml(k.status)}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderRecommendationsConsolidated(recommendationsProse, structuredRecs) {
+            const container = document.getElementById('recsContent');
+            const prose = recommendationsProse || {};
+
+            const imediata = (prose.imediata || '').trim();
+            const curto = (prose.curto_prazo || '').trim();
+            const medio = (prose.medio_prazo || '').trim();
+
+            // Se prosa vazia mas temos recomendacoes estruturadas, exibir como lista
+            if (!imediata && !curto && !medio && structuredRecs && structuredRecs.length > 0) {
+                const labels = { imediata: 'Acoes imediatas', curto: 'Curto prazo', medio: 'Medio prazo' };
+                const byPriority = { imediata: [], curto: [], medio: [] };
+                structuredRecs.forEach(r => {
+                    const p = (r.priority || 'medio').toLowerCase();
+                    const key = p.includes('imediat') ? 'imediata' : p.includes('curto') ? 'curto' : 'medio';
+                    if (byPriority[key]) byPriority[key].push(r);
+                });
+                let html = '';
+                ['imediata', 'curto', 'medio'].forEach(k => {
+                    const items = byPriority[k];
+                    if (items.length) {
+                        html += `<div class="recs-section"><div class="recs-section-title ${k}">${escapeHtml(labels[k])}</div>`;
+                        items.forEach(r => {
+                            const t = (r.title || '').trim();
+                            const d = (r.description || '').trim();
+                            html += `<p class="recs-text">${escapeHtml(t)}${d ? ': ' + escapeHtml(d) : ''}</p>`;
+                        });
+                        html += '</div>';
+                    }
+                });
+                container.innerHTML = html || '<p class="text-muted">Nenhuma recomendacao gerada.</p>';
+                return;
+            }
+
+            if (!imediata && !curto && !medio) {
+                container.innerHTML = '<p class="text-muted">Nenhuma recomendacao gerada. Complete a pesquisa com respondentes para obter analise.</p>';
+                return;
+            }
+
+            let html = '';
+
+            if (imediata) {
+                html += `<div class="recs-section">
+                    <div class="recs-section-title imediata">Acoes de aplicacao imediata</div>
+                    <p class="recs-text">${escapeHtml(imediata)}</p>
+                </div>`;
+            }
+            if (curto) {
+                html += `<div class="recs-section">
+                    <div class="recs-section-title curto">Acoes de curto prazo</div>
+                    <p class="recs-text">${escapeHtml(curto)}</p>
+                </div>`;
+            }
+            if (medio) {
+                html += `<div class="recs-section">
+                    <div class="recs-section-title medio">Acoes de medio prazo</div>
+                    <p class="recs-text">${escapeHtml(medio)}</p>
+                </div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function renderCharts(data) {
+            const dimTbody = document.querySelector('#dimensionsTable tbody');
+            if (!data || !data.dim_scores || data.dim_scores.length === 0) {
+                if (dimTbody) dimTbody.innerHTML = '<tr><td colspan="6" class="text-muted" style="text-align:center; padding:24px;">Nenhum dado disponivel.</td></tr>';
+                return;
+            }
+            // 1. Radar Chart (8 Categories)
+            const cats = {};
+
+            // Need category mapping. We can infer from data.dim_scores which has 'category' field
+            // But we specifically need the 8 visual categories (Exigencias, Autonomia, etc.)
+            // The backend sends 26 dimensions. We need to map 26 dims -> 8 Main Categories.
+            // Since backend doesn't send 8-cat grouping in dashboard JSON, we do it here.
+
+            // Map: Category Name -> [Dim1, Dim2...]
+            // Or easier: Iterate dim_scores and group by 'category' field?
+            // Wait, data.dim_scores has 'category' (e.g. "Exigencias Laborais").
+            // Check copsoq_data.py: "Exigencias do Trabalho" (visual) vs "Exigencias Laborais" (dim category)
+            // Ideally backend would send this. But let's approximate by grouping the 26 dims by their 'category' field
+            // which corresponds roughly to the 8 visual categories.
+
+            const catMap = {};
+            data.dim_scores.forEach(d => {
+                const cat = d.category;
+                if (!catMap[cat]) catMap[cat] = { sum: 0, count: 0, name: cat, type: d.type };
+                catMap[cat].sum += d.score;
+                catMap[cat].count++;
+            });
+
+            const LOWER = 2.33, UPPER = 3.66;
+            const getCatStatus = (avg, type) => {
+                if (type === 'risk') return avg < LOWER ? 'green' : avg > UPPER ? 'red' : 'yellow';
+                return avg > UPPER ? 'green' : avg < LOWER ? 'red' : 'yellow';
+            };
+            const statusColors = { green: '#6B9F7E', yellow: '#D4A843', red: '#C46B6B' };
+
+            const radarLabels = Object.keys(catMap);
+            const radarValues = radarLabels.map(k => parseFloat((catMap[k].sum / catMap[k].count).toFixed(2)));
+            const radarPointColors = radarLabels.map(k => {
+                const avg = catMap[k].sum / catMap[k].count;
+                return statusColors[getCatStatus(avg, catMap[k].type)];
+            });
+
+            // RADAR
+            const ctxRadar = document.getElementById('radarChart').getContext('2d');
+            if (radarChart) radarChart.destroy();
+            radarChart = new Chart(ctxRadar, {
+                type: 'radar',
+                data: {
+                    labels: radarLabels,
+                    datasets: [{
+                        label: 'Media por Categoria',
+                        data: radarValues,
+                        backgroundColor: 'rgba(107, 130, 168, 0.15)',
+                        borderColor: '#6B82A8',
+                        pointBackgroundColor: radarPointColors,
+                        pointBorderColor: radarPointColors,
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    scales: {
+                        r: {
+                            min: 0,
+                            max: 5,
+                            ticks: { display: false, font: { size: 14 } },
+                            pointLabels: { font: { size: 15 } }
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // 2. Bar Chart (26 Dimensions)
+            const labels26 = data.dim_scores.map(d => d.name);
+            const values26 = data.dim_scores.map(d => d.score);
+            const colors26 = data.dim_scores.map(d => {
+                if (d.status === 'green') return '#6B9F7E';
+                if (d.status === 'yellow') return '#D4A843';
+                return '#C46B6B';
+            });
+
+            const ctxBar = document.getElementById('barChart').getContext('2d');
+            if (barChart) barChart.destroy();
+            barChart = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: labels26,
+                    datasets: [{
+                        label: 'Score',
+                        data: values26,
+                        backgroundColor: colors26,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    scales: {
+                        x: { min: 0, max: 5, ticks: { font: { size: 14 } } },
+                        y: { ticks: { font: { size: 14 }, autoSkip: false } }
+                    },
+                    plugins: { legend: { display: false } },
+                    maintainAspectRatio: false
+                }
+            });
+            ctxBar.canvas.parentNode.style.height = '600px';
+
+            // Tabela Dimensoes (igual Excel aba Dimensoes, sem coluna Descricao)
+            if (dimTbody) {
+                const statusLabels = { green: 'Favoravel', yellow: 'Atencao', red: 'Critico' };
+                dimTbody.innerHTML = (data.dim_scores || []).map((d, i) => {
+                    const tipo = d.type === 'risk' ? 'Risco' : 'Recurso';
+                    const statusLabel = statusLabels[d.status] || '';
+                    const bg = d.status === 'green' ? 'var(--sage-100)' : d.status === 'yellow' ? 'var(--yellow-bg)' : 'var(--red-bg)';
+                    return `<tr><td>${i + 1}</td><td><strong>${escapeHtml(d.name)}</strong></td><td style="text-align:center">${d.score.toFixed(2)}</td><td style="background:${bg}">${escapeHtml(statusLabel)}</td><td>${escapeHtml(tipo)}</td><td class="text-muted">${escapeHtml(d.category)}</td></tr>`;
+                }).join('');
+            }
+        }
+
+        // TRANSPOSED TABLE
+        function renderTransposedTable(data) {
+            const table = document.getElementById('responsesTable');
+            if (!table) return;
+            const thead = table.querySelector('thead tr');
+            const tbody = table.querySelector('tbody');
+            if (!thead || !tbody) return;
+
+            thead.innerHTML = '<th>Dimensao</th><th>Categoria</th><th>Media</th>';
+            tbody.innerHTML = '';
+
+            if (!data) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td colspan="3" class="text-muted" style="text-align:center; padding:24px;">Selecione uma pesquisa no Dashboard primeiro.</td>';
+                tbody.appendChild(tr);
+                return;
+            }
+            if (data.loading) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td colspan="3" class="text-muted" style="text-align:center; padding:24px;">Carregando respostas...</td>';
+                tbody.appendChild(tr);
+                return;
+            }
+            if (!data.respondents || data.respondents.length === 0) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td colspan="3" class="text-muted" style="text-align:center; padding:24px;">Nenhum respondente nesta pesquisa.</td>';
+                tbody.appendChild(tr);
+                return;
+            }
+
+            // Columns: Respondentes
+            data.respondents.forEach(r => {
+                const th = document.createElement('th');
+                th.textContent = r.display_id;
+                th.style.textAlign = 'center';
+                thead.appendChild(th);
+            });
+
+            // Rows: Dimensoes (26)
+            if (!data.dim_scores || data.dim_scores.length === 0) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td colspan="' + (3 + data.respondents.length) + '" class="text-muted" style="text-align:center; padding:24px;">Dados de dimensoes indisponiveis.</td>';
+                tbody.appendChild(tr);
+                return;
+            }
+            data.dim_scores.forEach(dim => {
+                const tr = document.createElement('tr');
+
+                // Dimensao Name
+                tr.innerHTML = `
+                    <td><strong>${escapeHtml(dim.name)}</strong></td>
+                    <td class="text-muted" style="font-size:0.8rem">${escapeHtml(dim.category)}</td>
+                    <td class="score-cell" style="background:${getStatusColor(dim.status, true)}">${escapeHtml(String(dim.score.toFixed(1)))}</td>
+                `;
+
+                // Cells for each respondent
+                data.respondents.forEach(resp => {
+                    const score = resp.scores[dim.dimension_id];
+                    const scoreVal = score !== undefined ? score.toFixed(1) : '-';
+                    const status = resp.statuses ? resp.statuses[dim.dimension_id] : 'yellow';
+
+                    const td = document.createElement('td');
+                    td.className = 'score-cell';
+                    if (score !== undefined) {
+                        td.textContent = scoreVal;
+                        td.style.backgroundColor = getStatusColor(status, true);
+                    } else {
+                        td.textContent = '-';
+                    }
+                    tr.appendChild(td);
+                });
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        function getStatusColor(status, isBg) {
+            const map = {
+                green: isBg ? 'var(--sage-100)' : 'var(--green)',
+                yellow: isBg ? 'var(--yellow-bg)' : 'var(--yellow)',
+                red: isBg ? 'var(--red-bg)' : 'var(--red)'
+            };
+            return map[status] || 'transparent';
+        }
+
+        // UTILS
+        function showToast(msg, type = 'info') {
+            const el = document.getElementById('toast');
+            el.className = `toast ${type}`;
+            document.getElementById('toastMsg').textContent = msg;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 3000);
+        }
+
+        function logout() {
+            sessionStorage.clear();
+            window.location.href = '/';
+        }
+
+        // MODALS
+        function openNewSurveyModal() {
+            document.getElementById('newSurveyModal').classList.add('show');
+            document.getElementById('newCompanyName').focus();
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
+        }
+        document.getElementById('newSurveyForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('newCompanyName').value;
+            try {
+                const res = await fetch('/api/admin/surveys', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ company_name: name, admin_code: ADMIN_CODE })
+                });
+                if (res.ok) {
+                    closeModal('newSurveyModal');
+                    showToast('Pesquisa criada!', 'success');
+                    init();
+                }
+            } catch (e) { console.error(e); }
+        };
+
+        async function showQrModal(id) {
+            try {
+                const res = await fetch(`/api/admin/surveys/${id}/qrcode?admin_code=${ADMIN_CODE}&base_url=${window.location.origin}`);
+                const data = await res.json();
+                document.getElementById('qrImage').src = data.qr_base64;
+                document.getElementById('qrUrl').textContent = data.survey_url;
+                document.getElementById('qrModal').classList.add('show');
+            } catch (e) { console.error(e); }
+        }
+
+        async function copyLink() {
+            const text = document.getElementById('qrUrl').textContent;
+            await navigator.clipboard.writeText(text);
+            showToast('Link copiado!', 'success');
+        }
+
+        function exportReport(id, type) {
+            window.open(`/api/admin/surveys/${id}/export/${type}?admin_code=${ADMIN_CODE}`, '_blank');
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

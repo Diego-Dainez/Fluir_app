@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluir — Acesso Administrativo</title>
+    <meta name="description" content="Fluir — Plataforma de diagnostico psicossocial. Bem-estar que move resultados.">
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-card card">
+            <div class="card-body">
+                <div class="login-logo">
+                    <img src="/static/img/fluir_logo.png" alt="Fluir">
+                </div>
+                <div class="login-logo-text">Fluir</div>
+                <div class="login-tagline">Bem-estar que move resultados</div>
+
+                <div class="login-error" id="loginError"></div>
+
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label" for="adminCode">Codigo de Acesso</label>
+                        <input class="input" type="password" id="adminCode" placeholder="Digite seu codigo"
+                            autocomplete="off" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-full btn-lg" id="loginBtn">Entrar</button>
+                </form>
+
+                <p style="margin-top: 12px; font-size: 0.85rem;">
+                    <a href="#" id="recoverLink" style="color: var(--primary-600);">Esqueci minha chave</a>
+                </p>
+
+                <div id="recoverSection" class="hidden" style="margin-top: 16px; padding: 16px; background: var(--bg-hover, #f5f5f5); border-radius: 8px;">
+                    <p style="margin: 0 0 12px 0; font-size: 0.9rem;">Digite o email cadastrado para receber a chave:</p>
+                    <form id="recoverForm">
+                        <div class="form-group">
+                            <input class="input" type="email" id="recoverEmail" placeholder="seu@email.com" required>
+                        </div>
+                        <button type="submit" class="btn btn-secondary w-full" id="recoverBtn">Enviar</button>
+                    </form>
+                    <p id="recoverMsg" class="hidden" style="margin-top: 12px; font-size: 0.85rem; color: var(--green);"></p>
+                </div>
+
+                <p style="margin-top: 24px; font-size: 0.8rem; color: var(--text-400);">
+                    Acesso exclusivo para profissionais autorizados.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const code = document.getElementById('adminCode').value.trim();
+            const errEl = document.getElementById('loginError');
+            const btn = document.getElementById('loginBtn');
+            errEl.classList.remove('show');
+            btn.disabled = true;
+            btn.textContent = 'Entrando...';
+
+            try {
+                const res = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ admin_code: code })
+                });
+                if (!res.ok) {
+                    let msg = 'Codigo invalido';
+                    try {
+                        const data = await res.json();
+                        const d = data.detail;
+                        msg = Array.isArray(d) ? (d[0]?.msg || d[0]) : (d || msg);
+                    } catch (_) {}
+                    throw new Error(msg);
+                }
+                const data = await res.json();
+                sessionStorage.setItem('fluir_admin_code', code);
+                sessionStorage.setItem('fluir_surveys', JSON.stringify(data.surveys));
+                window.location.href = '/admin';
+            } catch (err) {
+                errEl.textContent = err.message;
+                errEl.classList.add('show');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Entrar';
+            }
+        });
+
+        if (sessionStorage.getItem('fluir_admin_code')) {
+            window.location.href = '/admin';
+        }
+
+        document.getElementById('recoverLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('recoverSection').classList.remove('hidden');
+        });
+
+        document.getElementById('recoverForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('recoverEmail').value.trim();
+            const btn = document.getElementById('recoverBtn');
+            const msgEl = document.getElementById('recoverMsg');
+            msgEl.classList.add('hidden');
+            btn.disabled = true;
+            try {
+                const res = await fetch('/api/admin/recover-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await res.json();
+                msgEl.textContent = data.message || 'Se o email estiver cadastrado, voce recebera a chave em instantes.';
+                msgEl.style.color = 'var(--green, #22c55e)';
+                msgEl.classList.remove('hidden');
+            } catch (err) {
+                msgEl.textContent = 'Erro ao enviar. Tente novamente.';
+                msgEl.style.color = 'var(--red, #ef4444)';
+                msgEl.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>

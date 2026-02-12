@@ -1,0 +1,12 @@
+# Arquivos ignorados no deploy para o Render
+# https://render.com/docs/ignore-files
+
+.venv
+__pycache__
+*.py[cod]
+*$py.class
+.pytest_cache
+test_fluir.db
+tests
+.env
+.env.*

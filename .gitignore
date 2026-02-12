@@ -1,0 +1,30 @@
+# Ambiente virtual
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Variaveis de ambiente (NUNCA commitar)
+.env
+
+# Banco de testes (gerado pelo pytest)
+test_fluir.db
+
+# Banco de dados local (cada ambiente tem o seu)
+fluir.db
+
+# IDE / SO
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
