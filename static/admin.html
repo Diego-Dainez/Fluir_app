@@ -231,9 +231,8 @@
                 document.getElementById('pageTitle').textContent = 'Dashboard';
                 if (currentSurveyId) {
                     actions.innerHTML = `
-                        <button class="btn btn-secondary" onclick="exportReport('${currentSurveyId}', 'pdf')">PDF</button>
+                        <button class="btn btn-secondary" onclick="exportReport('${currentSurveyId}', 'pptx')">PPT</button>
                         <button class="btn btn-secondary" onclick="exportReport('${currentSurveyId}', 'excel')">Excel</button>
-                        <button class="btn btn-secondary" onclick="exportReport('${currentSurveyId}', 'docx')">Texto</button>
                     `;
                     loadDashboard(currentSurveyId);
                 }

@@ -1,5 +1,5 @@
 """
-Fluir — Serviço de Exportação (PDF + Excel)
+Fluir — Servico de Exportacao (Excel + PPT)
 """
 
 import io
@@ -8,15 +8,9 @@ from datetime import datetime
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4, landscape
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import mm, cm
-from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    PageBreak, HRFlowable
-)
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from pptx import Presentation
+from pptx.dml.color import RGBColor
+from pptx.util import Pt, Inches
 
 from copsoq_data import DIMENSIONS
 
@@ -216,254 +210,91 @@ def export_excel(survey, respondents_data, dim_scores_agg, kpis, summary, recomm
 
 
 # ══════════════════════════════════════════════
-# PDF EXPORT
+# PPT EXPORT
 # ══════════════════════════════════════════════
 
-def export_pdf(survey, dim_scores_agg, kpis, summary, recommendations_prose) -> io.BytesIO:
-    """Gera PDF executivo e retorna BytesIO.
+def _add_title_slide(prs: Presentation, company: str, date: str) -> None:
+    """Adiciona slide de capa."""
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    title_box = slide.shapes.add_textbox(Inches(0.5), Inches(1.5), Inches(9), Inches(1))
+    t = title_box.text_frame.paragraphs[0]
+    t.text = "Fluir"
+    t.font.size = Pt(44)
+    t.font.bold = True
+    t.font.color.rgb = RGBColor(0x0F, 0x4C, 0x75)
+    tb = slide.shapes.add_textbox(Inches(0.5), Inches(2.2), Inches(9), Inches(1))
+    p = tb.text_frame.paragraphs[0]
+    p.text = "Relatorio de Diagnostico Psicossocial"
+    p.font.size = Pt(18)
+    p.font.color.rgb = RGBColor(0x32, 0x82, 0xB8)
+    tb2 = slide.shapes.add_textbox(Inches(0.5), Inches(3), Inches(9), Inches(1))
+    tb2.text_frame.paragraphs[0].text = f"Organizacao: {company}  |  Data: {date}"
+    tb2.text_frame.paragraphs[0].font.size = Pt(14)
 
-    A secao de recomendacoes utiliza texto corrido consultivo, organizado por prazo:
-    - imediata
-    - curto_prazo
-    - medio_prazo
+
+def _add_table_slide(prs: Presentation, title_text: str, headers: list, rows: list) -> None:
+    """Adiciona slide com tabela."""
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    left = Inches(0.5)
+    top = Inches(1)
+    width = Inches(9)
+    height = Inches(1)
+    title_box = slide.shapes.add_textbox(left, Inches(0.3), width, Inches(0.6))
+    title_box.text_frame.paragraphs[0].text = title_text
+    title_box.text_frame.paragraphs[0].font.size = Pt(24)
+    title_box.text_frame.paragraphs[0].font.bold = True
+    n_cols = len(headers)
+    n_rows = len(rows) + 1
+    table_height = Inches(0.35 * min(n_rows, 12))
+    table = slide.shapes.add_table(n_rows, n_cols, left, top, width, table_height).table
+    for i, h in enumerate(headers):
+        cell = table.cell(0, i)
+        cell.text = str(h)
+        cell.text_frame.paragraphs[0].font.bold = True
+    for r_idx, row in enumerate(rows, 1):
+        for c_idx, val in enumerate(row):
+            if c_idx < n_cols:
+                table.cell(r_idx, c_idx).text = str(val)
+
+
+def export_pptx(survey, dim_scores_agg, kpis, summary, recommendations_prose) -> io.BytesIO:
+    """Gera apresentacao PowerPoint executiva e retorna BytesIO.
+
+    Slides: capa, KPIs, resumo, dimensoes, recomendacoes (por prazo), rodape.
     """
-    buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=2*cm, bottomMargin=2*cm, leftMargin=2*cm, rightMargin=2*cm)
-
-    styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle("FluirTitle", parent=styles["Title"], fontName="Helvetica-Bold", fontSize=22, textColor=colors.HexColor("#0F4C75"), spaceAfter=6))
-    styles.add(ParagraphStyle("FluirSubtitle", parent=styles["Normal"], fontName="Helvetica", fontSize=12, textColor=colors.HexColor("#3282B8"), spaceAfter=12))
-    styles.add(ParagraphStyle("FluirSection", parent=styles["Heading2"], fontName="Helvetica-Bold", fontSize=14, textColor=colors.HexColor("#0F4C75"), spaceBefore=16, spaceAfter=8))
-    styles.add(ParagraphStyle("FluirBody", parent=styles["Normal"], fontName="Helvetica", fontSize=10, textColor=colors.HexColor("#2C3E50"), spaceAfter=4, leading=14))
-    styles.add(ParagraphStyle("FluirSmall", parent=styles["Normal"], fontName="Helvetica", fontSize=8, textColor=colors.HexColor("#7F8C8D")))
-
-    story = []
-
-    # Title
-    story.append(Paragraph("Fluir", styles["FluirTitle"]))
-    story.append(Paragraph("Relatório de Diagnóstico Psicossocial", styles["FluirSubtitle"]))
-    story.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor("#0F4C75"), spaceAfter=12))
-
+    prs = Presentation()
     company = survey.get("company_name", "Empresa")
-    date = datetime.now().strftime("%d/%m/%Y")
-    story.append(Paragraph(f"<b>Organização:</b> {company} &nbsp;&nbsp;|&nbsp;&nbsp; <b>Data:</b> {date}", styles["FluirBody"]))
-    story.append(Spacer(1, 12))
-
-    # KPIs
-    story.append(Paragraph("Indicadores-Chave de Desempenho (KPIs)", styles["FluirSection"]))
-
-    kpi_data = [["Indicador", "Valor", "Status"]]
-    kpi_colors_map = {"green": colors.HexColor("#27AE60"), "yellow": colors.HexColor("#F39C12"), "red": colors.HexColor("#E74C3C")}
-    kpi_row_colors = []
-    for key, kpi in kpis.items():
-        kpi_data.append([kpi["label"], f"{kpi['value']:.2f}", kpi["status"]])
-        kpi_row_colors.append(kpi.get("color", "yellow"))
-
-    kpi_table = Table(kpi_data, colWidths=[200, 80, 100])
-    kpi_style = [
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0F4C75")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, -1), 10),
-        ("ALIGN", (1, 0), (-1, -1), "CENTER"),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#CCCCCC")),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("ROWHEIGHTS", (0, 0), (-1, -1), 28),
-    ]
-    for i, c in enumerate(kpi_row_colors):
-        kpi_style.append(("BACKGROUND", (2, i + 1), (2, i + 1), kpi_colors_map.get(c, colors.white)))
-        kpi_style.append(("TEXTCOLOR", (2, i + 1), (2, i + 1), colors.white))
-    kpi_table.setStyle(TableStyle(kpi_style))
-    story.append(kpi_table)
-    story.append(Spacer(1, 16))
-
-    # Summary
-    story.append(Paragraph("Resumo Geral", styles["FluirSection"]))
-    story.append(Paragraph(f"• <font color='#27AE60'><b>{summary['green']}</b></font> dimensões favoráveis &nbsp;&nbsp; • <font color='#F39C12'><b>{summary['yellow']}</b></font> em atenção &nbsp;&nbsp; • <font color='#E74C3C'><b>{summary['red']}</b></font> críticas", styles["FluirBody"]))
-    story.append(Spacer(1, 8))
-
-    # Dimensions table
-    story.append(Paragraph("Análise por Dimensão", styles["FluirSection"]))
-
-    dim_data = [["Dimensão", "Score", "Status", "Tipo", "Categoria"]]
-    dim_row_colors = []
-    for d in dim_scores_agg:
-        dim_data.append([d["name"], f"{d['score']:.2f}", STATUS_LABEL.get(d["status"], ""), "Risco" if d["type"] == "risk" else "Recurso", d["category"]])
-        dim_row_colors.append(d["status"])
-
-    dim_table = Table(dim_data, colWidths=[140, 50, 70, 55, 140])
-    dim_style = [
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0F4C75")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, -1), 8),
-        ("ALIGN", (1, 0), (3, -1), "CENTER"),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#CCCCCC")),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("ROWHEIGHTS", (0, 0), (-1, -1), 20),
-    ]
-    for i, c in enumerate(dim_row_colors):
-        dim_style.append(("BACKGROUND", (2, i + 1), (2, i + 1), kpi_colors_map.get(c, colors.white)))
-        if c in ("green", "red"):
-            dim_style.append(("TEXTCOLOR", (2, i + 1), (2, i + 1), colors.white))
-    dim_table.setStyle(TableStyle(dim_style))
-    story.append(dim_table)
-
-    # Recommendations em texto corrido (IA)
-    if recommendations_prose:
-        has_any_text = any(
-            bool((recommendations_prose.get(key) or "").strip())
-            for key in ("imediata", "curto_prazo", "medio_prazo")
-        )
-        if has_any_text:
-            story.append(PageBreak())
-            story.append(Paragraph("Análise e Recomendações (IA)", styles["FluirSection"]))
-            story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#3282B8"), spaceAfter=8))
-
-            sections = [
-                ("Ações de aplicação imediata", "imediata"),
-                ("Ações de curto prazo", "curto_prazo"),
-                ("Ações de médio prazo", "medio_prazo"),
-            ]
-            for title, key in sections:
-                text = (recommendations_prose.get(key) or "").strip()
-                if not text:
-                    continue
-                story.append(Paragraph(f"<b>{title}</b>", styles["FluirBody"]))
-                story.append(Paragraph(text, styles["FluirBody"]))
-                story.append(Spacer(1, 8))
-
-    # Footer
-    story.append(Spacer(1, 24))
-    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#CCCCCC"), spaceAfter=6))
-    story.append(Paragraph("Relatório gerado pela plataforma <b>Fluir</b> — Bem-estar que move resultados", styles["FluirSmall"]))
-    story.append(Paragraph("Metodologia: COPSOQ II (Copenhagen Psychosocial Questionnaire) — Versão Curta Portuguesa", styles["FluirSmall"]))
-    story.append(Paragraph("Documento confidencial — Uso exclusivo para fins de consultoria organizacional", styles["FluirSmall"]))
-
-    doc.build(story)
-    buf.seek(0)
-    return buf
-
-
-# ══════════════════════════════════════════════
-# DOCX EXPORT
-# ══════════════════════════════════════════════
-
-def export_docx(survey, dim_scores_agg, kpis, summary, recommendations_prose) -> io.BytesIO:
-    """Gera relatorio em Word (.docx) com texto corrido de IA.
-
-    O foco e fornecer um documento editavel, em formato de apresentacao profissional,
-    com os principais blocos:
-    - capa com empresa e data
-    - resumo de KPIs
-    - tabela de dimensoes
-    - analise e recomendacoes (IA) por prazo
-    """
-    try:
-        from docx import Document  # type: ignore
-        from docx.shared import Pt
-    except ImportError:
-        # Deixamos o erro claro para quem estiver rodando o backend.
-        raise RuntimeError("Dependencia 'python-docx' nao encontrada. Instale com: pip install python-docx")
-
-    doc = Document()
-
-    company = survey.get("company_name", "Empresa")
-    date = datetime.now().strftime("%d/%m/%Y")
-
-    # Estilos basicos
-    style_title = doc.styles["Title"]
-    style_title.font.name = "Calibri"
-    style_title.font.size = Pt(24)
-    style_title.font.bold = True
-
-    # Capa
-    doc.add_heading("Fluir — Relatório de Diagnóstico Psicossocial", level=0)
-    p = doc.add_paragraph()
-    run = p.add_run(f"Organização: {company}\nData: {date}")
-    run.font.size = Pt(12)
-    doc.add_paragraph()
-
-    # KPIs
-    doc.add_heading("Indicadores-Chave (KPIs)", level=1)
-    if kpis:
-        table = doc.add_table(rows=1, cols=3)
-        hdr_cells = table.rows[0].cells
-        hdr_cells[0].text = "Indicador"
-        hdr_cells[1].text = "Valor"
-        hdr_cells[2].text = "Status"
-        for kpi in kpis.values():
-            row_cells = table.add_row().cells
-            row_cells[0].text = str(kpi.get("label", ""))
-            row_cells[1].text = f"{kpi.get('value', 0):.2f}"
-            row_cells[2].text = str(kpi.get("status", ""))
-    else:
-        doc.add_paragraph("Nenhum indicador calculado até o momento.")
-
-    doc.add_paragraph()
-
-    # Resumo simples
-    doc.add_heading("Resumo Geral", level=1)
-    doc.add_paragraph(
-        f"Dimensões favoráveis: {summary.get('green', 0)} | "
-        f"em atenção: {summary.get('yellow', 0)} | "
-        f"críticas: {summary.get('red', 0)}"
-    )
-
-    doc.add_paragraph()
-
-    # Tabela de dimensoes
-    doc.add_heading("Análise por Dimensão", level=1)
-    if dim_scores_agg:
-        table = doc.add_table(rows=1, cols=5)
-        hdr_cells = table.rows[0].cells
-        hdr_cells[0].text = "Dimensão"
-        hdr_cells[1].text = "Score"
-        hdr_cells[2].text = "Status"
-        hdr_cells[3].text = "Tipo"
-        hdr_cells[4].text = "Categoria"
-        for d in dim_scores_agg:
-            row = table.add_row().cells
-            row[0].text = str(d.get("name", ""))
-            row[1].text = f"{d.get('score', 0):.2f}"
-            row[2].text = STATUS_LABEL.get(d.get("status", ""), "")
-            row[3].text = "Risco" if d.get("type") == "risk" else "Recurso"
-            row[4].text = str(d.get("category", ""))
-    else:
-        doc.add_paragraph("Ainda não há dados suficientes para análise das dimensões.")
-
-    doc.add_page_break()
-
-    # Analise e recomendacoes em texto corrido (IA)
-    doc.add_heading("Análise e Recomendações (IA)", level=1)
-    if recommendations_prose:
-        sections = [
-            ("Ações de aplicação imediata", "imediata"),
-            ("Ações de curto prazo", "curto_prazo"),
-            ("Ações de médio prazo", "medio_prazo"),
-        ]
-        any_text = False
-        for title, key in sections:
-            text = (recommendations_prose.get(key) or "").strip()
-            if not text:
-                continue
-            any_text = True
-            doc.add_heading(title, level=2)
-            doc.add_paragraph(text)
-
-        if not any_text:
-            doc.add_paragraph("Nenhuma recomendação de IA disponível no momento.")
-    else:
-        doc.add_paragraph("Nenhuma recomendação de IA disponível no momento.")
-
-    # Rodape simples
-    doc.add_paragraph()
-    doc.add_paragraph(
-        "Relatório gerado pela plataforma Fluir — Bem-estar que move resultados. "
-        "Documento confidencial, de uso exclusivo para fins de consultoria organizacional."
-    )
-
+    date_str = datetime.now().strftime("%d/%m/%Y")
+    _add_title_slide(prs, company, date_str)
+    kpi_headers = ["Indicador", "Valor", "Status"]
+    kpi_rows = [[kpi["label"], f"{kpi['value']:.2f}", kpi["status"]] for kpi in kpis.values()]
+    _add_table_slide(prs, "Indicadores-Chave (KPIs)", kpi_headers, kpi_rows)
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    box = slide.shapes.add_textbox(Inches(0.5), Inches(1), Inches(9), Inches(2))
+    p = box.text_frame.paragraphs[0]
+    p.text = f"Resumo: {summary.get('green', 0)} favoraveis | {summary.get('yellow', 0)} atencao | {summary.get('red', 0)} criticas"
+    p.font.size = Pt(18)
+    dim_headers = ["Dimensao", "Score", "Status", "Tipo", "Categoria"]
+    dim_rows = [[d["name"], f"{d['score']:.2f}", STATUS_LABEL.get(d["status"], ""), "Risco" if d["type"] == "risk" else "Recurso", d["category"]] for d in dim_scores_agg]
+    _add_table_slide(prs, "Analise por Dimensao", dim_headers, dim_rows)
+    sections = [("Acoes imediatas", "imediata"), ("Curto prazo", "curto_prazo"), ("Medio prazo", "medio_prazo")]
+    for title, key in sections:
+        text = (recommendations_prose or {}).get(key) or ""
+        if text.strip():
+            slide = prs.slides.add_slide(prs.slide_layouts[6])
+            tit_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(9), Inches(0.7))
+            tit_box.text_frame.paragraphs[0].text = title
+            tit_box.text_frame.paragraphs[0].font.size = Pt(24)
+            tit_box.text_frame.paragraphs[0].font.bold = True
+            tx = slide.shapes.add_textbox(Inches(0.5), Inches(1.2), Inches(9), Inches(5))
+            tx.text_frame.word_wrap = True
+            tx.text_frame.paragraphs[0].text = text.strip()[:2000]
+            tx.text_frame.paragraphs[0].font.size = Pt(12)
+    footer_slide = prs.slides.add_slide(prs.slide_layouts[6])
+    fb = footer_slide.shapes.add_textbox(Inches(0.5), Inches(2), Inches(9), Inches(2))
+    fb.text_frame.paragraphs[0].text = "Fluir — Bem-estar que move resultados. COPSOQ II. Documento confidencial."
+    fb.text_frame.paragraphs[0].font.size = Pt(14)
     buf = io.BytesIO()
-    doc.save(buf)
+    prs.save(buf)
     buf.seek(0)
     return buf

@@ -30,7 +30,7 @@ from database import init_db, get_db, SessionLocal, Survey, Respondent, Recommen
 from copsoq_data import QUESTIONS, DIMENSIONS, CATEGORIES, SCALE_LABELS
 from copsoq_calculator import calc_dimension_scores, calc_kpis, calc_summary, get_status
 from recommendations_engine import generate_recommendations
-from export_service import export_excel, export_pdf, export_docx
+from export_service import export_excel, export_pptx
 from gemini_prose_service import generate_recommendations_prose
 
 EXPECTED_QUESTIONS = len(QUESTIONS)
@@ -345,29 +345,13 @@ def export_excel_endpoint(survey_id: str, admin_code: str = Query(...), db: Sess
                              headers={"Content-Disposition": f'attachment; filename="fluir_{survey.company_name}_{datetime.now().strftime("%Y%m%d")}.xlsx"'})
 
 
-@app.get("/api/admin/surveys/{survey_id}/export/pdf")
-def export_pdf_endpoint(survey_id: str, admin_code: str = Query(...), db: Session = Depends(get_db)):
+@app.get("/api/admin/surveys/{survey_id}/export/pptx")
+def export_pptx_endpoint(survey_id: str, admin_code: str = Query(...), db: Session = Depends(get_db)):
+    """Gera relatorio em PowerPoint (.pptx) com a analise e recomendacoes em prosa."""
     survey = _get_survey_auth(survey_id, admin_code, db)
     data = _get_export_data(survey, db)
     recommendations_prose = generate_recommendations_prose(data["recommendations"])
-    buf = export_pdf(
-        survey={"company_name": survey.company_name},
-        dim_scores_agg=data["dim_scores"],
-        kpis=data["kpis"],
-        summary=data["summary"],
-        recommendations_prose=recommendations_prose,
-    )
-    return StreamingResponse(buf, media_type="application/pdf",
-                             headers={"Content-Disposition": f'attachment; filename="fluir_{survey.company_name}_{datetime.now().strftime("%Y%m%d")}.pdf"'})
-
-
-@app.get("/api/admin/surveys/{survey_id}/export/docx")
-def export_docx_endpoint(survey_id: str, admin_code: str = Query(...), db: Session = Depends(get_db)):
-    """Gera relatorio em Word (.docx) com a analise e recomendacoes em texto corrido."""
-    survey = _get_survey_auth(survey_id, admin_code, db)
-    data = _get_export_data(survey, db)
-    recommendations_prose = generate_recommendations_prose(data["recommendations"])
-    buf = export_docx(
+    buf = export_pptx(
         survey={"company_name": survey.company_name},
         dim_scores_agg=data["dim_scores"],
         kpis=data["kpis"],
@@ -376,8 +360,8 @@ def export_docx_endpoint(survey_id: str, admin_code: str = Query(...), db: Sessi
     )
     return StreamingResponse(
         buf,
-        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        headers={"Content-Disposition": f'attachment; filename="fluir_{survey.company_name}_{datetime.now().strftime("%Y%m%d")}.docx"'},
+        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        headers={"Content-Disposition": f'attachment; filename="fluir_{survey.company_name}_{datetime.now().strftime("%Y%m%d")}.pptx"'},
     )
 
 
