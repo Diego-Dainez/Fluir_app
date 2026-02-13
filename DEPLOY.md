@@ -18,6 +18,8 @@ Este guia descreve como fazer deploy da aplicacao Fluir no Render.com para que o
 
 2. Verifique que `.env` esta no `.gitignore` (nunca commitar chaves ou senhas).
 
+3. **Banco de dados nao e apagado ao commitar**: `fluir.db` e `test_fluir.db` estao no `.gitignore`. Commits e pushes nunca incluem o banco. Seu banco local permanece intacto.
+
 ## Passo 2: Criar Conta no Render
 
 1. Acesse https://render.com
@@ -94,11 +96,19 @@ Envie ao cliente:
 - A primeira requisicao apos dormir pode levar 30-60 segundos
 - Para uso em producao com clientes, considere o plano pago ($7/mes) que mantem o servico sempre ativo
 
-### Banco de Dados (SQLite)
+### Banco de Dados
 
-- O banco SQLite e criado automaticamente
-- No plano gratuito, o disco e efemero: dados podem ser perdidos em alguns casos (redeploy, reinicio)
-- Para producao critica, considere migrar para PostgreSQL (Render oferece plano gratuito)
+**Local / Git:** `fluir.db` esta no `.gitignore` e nunca e commitado. Ao atualizar codigo e fazer push, seu banco local nao e afetado.
+
+**Render (produção):**
+- **SQLite (padrao):** Se nao configurar PostgreSQL, o app usa SQLite. No plano gratuito o disco e efemero: cada redeploy limpa o banco.
+- **PostgreSQL (recomendado):** Para o banco persistir entre deploys:
+
+  1. No Render, crie um **PostgreSQL** (New > Database > PostgreSQL)
+  2. Apos criar, va no Web Service do Fluir > **Environment**
+  3. Clique em **Connect** ao lado do PostgreSQL ou copie a **Internal Database URL**
+  4. Adicione a variavel `DATABASE_URL` com essa URL (Render pode injetar automaticamente ao "linkar" o DB)
+  5. Com isso, cada redeploy mantem os dados
 
 ### Atualizacoes
 

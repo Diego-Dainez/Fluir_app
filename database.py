@@ -13,8 +13,10 @@ from sqlalchemy import create_engine, Column, String, Boolean, DateTime, Text, I
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
 # Permite usar banco em memoria para testes (TEST_DATABASE_URL=sqlite:///:memory:)
+# DATABASE_URL: SQLite local ou PostgreSQL no Render (dados persistem entre deploys)
 DATABASE_URL = os.getenv("TEST_DATABASE_URL") or os.getenv("DATABASE_URL", "sqlite:///./fluir.db")
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+_connect_args = {"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
+engine = create_engine(DATABASE_URL, connect_args=_connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 

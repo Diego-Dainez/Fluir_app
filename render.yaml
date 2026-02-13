@@ -18,5 +18,3 @@ services:
         sync: false
       - key: CORS_ORIGINS
         value: "*"
-      - key: DATABASE_URL
-        value: "sqlite:///./fluir.db"
