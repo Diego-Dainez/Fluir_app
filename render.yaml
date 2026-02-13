@@ -1,5 +1,11 @@
 # Fluir - Configuracao de deploy no Render.com
 # https://render.com/docs/blueprint-spec
+# Banco PostgreSQL garante persistencia dos dados entre redeploys (commits).
+
+databases:
+  - name: fluir-db
+    plan: free
+    region: oregon
 
 services:
   - type: web
@@ -18,3 +24,7 @@ services:
         sync: false
       - key: CORS_ORIGINS
         value: "*"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fluir-db
+          property: connectionString

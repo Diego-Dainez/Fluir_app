@@ -8,6 +8,12 @@ Este guia descreve como fazer deploy da aplicacao Fluir no Render.com para que o
 - Codigo do Fluir em um repositorio Git
 - Conta no Render.com (gratuita)
 
+## Banco de Dados Persistente (importante)
+
+O `render.yaml` configura PostgreSQL para que os dados **nao sejam apagados** ao commitar e redeployar:
+- Pesquisas, respondentes e recomendacoes permanecem entre atualizacoes de codigo
+- Ao fazer push para o GitHub, apenas o aplicativo e atualizado; o banco mantem os dados
+
 ## Passo 1: Preparar o Repositorio
 
 1. Certifique-se de que todos os arquivos de deploy estao commitados:
@@ -17,8 +23,6 @@ Este guia descreve como fazer deploy da aplicacao Fluir no Render.com para que o
    - `requirements.txt`
 
 2. Verifique que `.env` esta no `.gitignore` (nunca commitar chaves ou senhas).
-
-3. **Banco de dados nao e apagado ao commitar**: `fluir.db` e `test_fluir.db` estao no `.gitignore`. Commits e pushes nunca incluem o banco. Seu banco local permanece intacto.
 
 ## Passo 2: Criar Conta no Render
 
@@ -96,19 +100,11 @@ Envie ao cliente:
 - A primeira requisicao apos dormir pode levar 30-60 segundos
 - Para uso em producao com clientes, considere o plano pago ($7/mes) que mantem o servico sempre ativo
 
-### Banco de Dados
+### Banco de Dados (PostgreSQL - persistente)
 
-**Local / Git:** `fluir.db` esta no `.gitignore` e nunca e commitado. Ao atualizar codigo e fazer push, seu banco local nao e afetado.
-
-**Render (produção):**
-- **SQLite (padrao):** Se nao configurar PostgreSQL, o app usa SQLite. No plano gratuito o disco e efemero: cada redeploy limpa o banco.
-- **PostgreSQL (recomendado):** Para o banco persistir entre deploys:
-
-  1. No Render, crie um **PostgreSQL** (New > Database > PostgreSQL)
-  2. Apos criar, va no Web Service do Fluir > **Environment**
-  3. Clique em **Connect** ao lado do PostgreSQL ou copie a **Internal Database URL**
-  4. Adicione a variavel `DATABASE_URL` com essa URL (Render pode injetar automaticamente ao "linkar" o DB)
-  5. Com isso, cada redeploy mantem os dados
+- O Blueprint (`render.yaml`) inclui um banco PostgreSQL (plano gratuito)
+- Os dados permanecem entre redeploys e atualizacoes de codigo
+- Ao fazer push para o GitHub, o Render redeploya o app mas o banco nao e apagado
 
 ### Atualizacoes
 
@@ -134,5 +130,5 @@ Envie ao cliente:
 
 ### Banco de dados vazio apos redeploy
 
-- No plano gratuito, o disco pode ser limpo
-- Para persistencia, use PostgreSQL ou o disco persistente (planos pagos)
+- Com o Blueprint atual (PostgreSQL), os dados persistem entre redeploys
+- Se o problema ocorrer, confira se o servico web esta vinculado ao banco `fluir-db` no Render
