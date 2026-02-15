@@ -32,7 +32,7 @@ from database import init_db, get_db, SessionLocal, Survey, Respondent, Recommen
 from copsoq_data import QUESTIONS, DIMENSIONS, CATEGORIES, SCALE_LABELS
 from copsoq_calculator import calc_dimension_scores, calc_kpis, calc_summary, get_status
 from recommendations_engine import generate_recommendations
-from export_service import export_excel, export_pptx
+from export_service import export_excel, export_pptx, PPT_FORMAT_VERSION
 from gemini_prose_service import generate_recommendations_prose
 
 EXPECTED_QUESTIONS = len(QUESTIONS)
@@ -184,6 +184,17 @@ async def survey_page(code: str, db: Session = Depends(get_db)):
     if not survey or not survey.is_active:
         raise HTTPException(404, "Pesquisa não encontrada ou encerrada.")
     return (static_path / "survey.html").read_text(encoding="utf-8")
+
+
+# ──── Diagnostico: versao do backend (para debug de export em build antigo) ────
+@app.get("/api/version")
+async def api_version():
+    """Retorna versao do app e formato PPT. Use para conferir se o backend em execucao tem o codigo novo."""
+    return {
+        "app": "1.0.0",
+        "ppt_format": PPT_FORMAT_VERSION,
+        "export_features": ["cards", "radar", "bar", "copywriting"],
+    }
 
 
 # ════════════════════════════════════════════

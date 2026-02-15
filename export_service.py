@@ -1,23 +1,36 @@
 """
-Fluir — Servico de Exportacao (Excel + PPT)
+Fluir - Servico de Exportacao (Excel + PPT)
 """
+
+# Versao do formato PPT (incrementar ao alterar layout/graficos/copywriting)
+# Usado pelo endpoint /api/version para diagnostico (backend novo vs antigo)
+PPT_FORMAT_VERSION = "2.0"
 
 import io
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from pptx import Presentation
 from pptx.dml.color import RGBColor
+from pptx.enum.shapes import MSO_SHAPE
 from pptx.util import Pt, Inches
 
 from copsoq_data import DIMENSIONS
 
+from ppt_copy import (
+    FECHAMENTO_CTA,
+    INTRO_RECOMENDACOES,
+    RESUMO_EXECUTIVO,
+    ROI_BULLETS,
+    ROI_TITULO,
+)
 
-# ──────── Color helpers ────────
+
+# ──────── Color helpers (Excel) ────────
 FILL_GREEN = PatternFill(start_color="D5F5E3", end_color="D5F5E3", fill_type="solid")
 FILL_YELLOW = PatternFill(start_color="FEF9E7", end_color="FEF9E7", fill_type="solid")
 FILL_RED = PatternFill(start_color="FADBD8", end_color="FADBD8", fill_type="solid")
@@ -42,6 +55,22 @@ SLIDE_WIDTH_16_9 = Inches(13.333)
 SLIDE_HEIGHT_16_9 = Inches(7.5)
 LOGO_SIZE_INCHES = 1.0
 IMG_DIR = Path(__file__).resolve().parent / "static" / "img"
+
+# Paleta PPT (branding Fluir)
+COLOR_PRIMARY = RGBColor(0x0F, 0x4C, 0x75)   # Azul principal
+COLOR_SECONDARY = RGBColor(0x32, 0x82, 0xB8)  # Azul secundario
+COLOR_GREEN = RGBColor(0x27, 0xAE, 0x60)
+COLOR_YELLOW = RGBColor(0xF3, 0x9C, 0x12)
+COLOR_RED = RGBColor(0xE7, 0x4C, 0x3C)
+COLOR_WHITE = RGBColor(0xFF, 0xFF, 0xFF)
+COLOR_GREEN_LIGHT = RGBColor(0xD5, 0xF5, 0xE3)
+COLOR_YELLOW_LIGHT = RGBColor(0xFE, 0xF9, 0xE7)
+COLOR_RED_LIGHT = RGBColor(0xFA, 0xDB, 0xD8)
+STATUS_RGB = {
+    "green": (COLOR_GREEN_LIGHT, COLOR_GREEN),
+    "yellow": (COLOR_YELLOW_LIGHT, COLOR_YELLOW),
+    "red": (COLOR_RED_LIGHT, COLOR_RED),
+}
 
 # Limites de truncamento para export
 MAX_DIM_DESC_LEN = 50
@@ -233,6 +262,124 @@ def export_excel(
 # PPT EXPORT
 # ══════════════════════════════════════════════
 
+def _build_category_scores(dim_scores_agg: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    """Agrupa dimensoes por categoria e calcula media. Retorna {nome_cat: {avg, type, status}}."""
+    from collections import defaultdict
+    cat_map: Dict[str, Dict[str, Any]] = defaultdict(lambda: {"sum": 0.0, "count": 0, "type": "resource"})
+    for d in dim_scores_agg:
+        cat = d.get("category", "Outros")
+        cat_map[cat]["sum"] += d.get("score", 0)
+        cat_map[cat]["count"] += 1
+        cat_map[cat]["type"] = d.get("type", "resource")
+    LOWER, UPPER = 2.33, 3.66
+    result = {}
+    for cat, data in cat_map.items():
+        avg = data["sum"] / data["count"] if data["count"] else 0
+        t = data["type"]
+        if t == "risk":
+            status = "green" if avg < LOWER else "red" if avg > UPPER else "yellow"
+        else:
+            status = "green" if avg > UPPER else "red" if avg < LOWER else "yellow"
+        result[cat] = {"avg": avg, "type": t, "status": status}
+    return result
+
+
+def _render_radar_chart(category_scores: Dict[str, Dict[str, Any]]) -> io.BytesIO:
+    """Gera grafico radar (8 categorias) como PNG em BytesIO."""
+    import math
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import numpy as np
+    labels = list(category_scores.keys())
+    values = [category_scores[l]["avg"] for l in labels]
+    colors_map = {"green": "#6B9F7E", "yellow": "#D4A843", "red": "#C46B6B"}
+    point_colors = [colors_map.get(category_scores[l]["status"], "#D4A843") for l in labels]
+    num = len(labels)
+    angles = [2 * math.pi * i / num for i in range(num)]
+    values += [values[0]]
+    angles += [angles[0]]
+    fig, ax = plt.subplots(figsize=(8, 6), subplot_kw=dict(projection="polar"))
+    ax.plot(angles, values, "o-", linewidth=2, color="#6B82A8")
+    ax.fill(angles, values, alpha=0.15, color="#6B82A8")
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(labels, size=9, wrap=True)
+    ax.set_ylim(0, 5)
+    ax.set_yticks([1, 2, 3, 4, 5])
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", dpi=120, bbox_inches="tight")
+    plt.close(fig)
+    buf.seek(0)
+    return buf
+
+
+def _render_bar_chart(dim_scores_agg: List[Dict[str, Any]]) -> io.BytesIO:
+    """Gera grafico de barras horizontais (26 dimensoes) como PNG em BytesIO."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    colors_map = {"green": "#6B9F7E", "yellow": "#D4A843", "red": "#C46B6B"}
+    labels = [d.get("name", "")[:20] for d in dim_scores_agg]
+    values = [d.get("score", 0) for d in dim_scores_agg]
+    colors = [colors_map.get(d.get("status", "yellow"), "#D4A843") for d in dim_scores_agg]
+    fig, ax = plt.subplots(figsize=(12, 8))
+    y_pos = range(len(labels))
+    ax.barh(y_pos, values, color=colors, height=0.7)
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(labels, fontsize=9)
+    ax.set_xlim(0, 5)
+    ax.set_xlabel("Score")
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", dpi=120, bbox_inches="tight")
+    plt.close(fig)
+    buf.seek(0)
+    return buf
+
+
+def _add_kpi_cards_slide(prs: Presentation, kpis: Dict[str, Any]) -> None:
+    """Adiciona slide com KPIs em layout de cards 2x2."""
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(12), Inches(0.6))
+    title_box.text_frame.paragraphs[0].text = "Indicadores-Chave (KPIs)"
+    title_box.text_frame.paragraphs[0].font.size = Pt(28)
+    title_box.text_frame.paragraphs[0].font.bold = True
+    title_box.text_frame.paragraphs[0].font.color.rgb = COLOR_PRIMARY
+    kpi_list = list(kpis.values())
+    positions = [(0.5, 1.2), (7.0, 1.2), (0.5, 3.8), (7.0, 3.8)]
+    card_w, card_h = Inches(6), Inches(2.2)
+    for i, (left_in, top_in) in enumerate(positions):
+        if i >= len(kpi_list):
+            break
+        kpi = kpi_list[i]
+        left, top = Inches(left_in), Inches(top_in)
+        color_key = kpi.get("color", "yellow")
+        fill_rgb, _ = STATUS_RGB.get(color_key, STATUS_RGB["yellow"])
+        try:
+            shape = slide.shapes.add_shape(
+                MSO_SHAPE.ROUNDED_RECTANGLE, left, top, card_w, card_h
+            )
+            shape.fill.solid()
+            shape.fill.fore_color.rgb = fill_rgb
+            shape.line.color.rgb = fill_rgb
+        except Exception:
+            shape = None
+        box_left = left + Inches(0.3)
+        box_top = top + Inches(0.3)
+        val_box = slide.shapes.add_textbox(box_left, box_top, card_w - Inches(0.6), Inches(0.8))
+        val_box.text_frame.paragraphs[0].text = f"{kpi['value']:.2f}"
+        val_box.text_frame.paragraphs[0].font.size = Pt(36)
+        val_box.text_frame.paragraphs[0].font.bold = True
+        val_box.text_frame.paragraphs[0].font.color.rgb = COLOR_PRIMARY
+        lbl_box = slide.shapes.add_textbox(box_left, top + Inches(1.1), card_w - Inches(0.6), Inches(0.5))
+        lbl_box.text_frame.paragraphs[0].text = kpi.get("label", "")
+        lbl_box.text_frame.paragraphs[0].font.size = Pt(12)
+        lbl_box.text_frame.paragraphs[0].font.color.rgb = COLOR_PRIMARY
+        status_box = slide.shapes.add_textbox(box_left, top + Inches(1.6), card_w - Inches(0.6), Inches(0.4))
+        status_box.text_frame.paragraphs[0].text = kpi.get("status", "")
+        status_box.text_frame.paragraphs[0].font.size = Pt(11)
+        status_box.text_frame.paragraphs[0].font.color.rgb = STATUS_RGB.get(color_key, STATUS_RGB["yellow"])[1]
+
+
 def _add_title_slide(prs: Presentation, company: str, date: str, total_respondents: int = 0) -> None:
     """Adiciona slide de capa com wallpaper, logo e textos."""
     slide = prs.slides.add_slide(prs.slide_layouts[6])
@@ -264,30 +411,60 @@ def _add_title_slide(prs: Presentation, company: str, date: str, total_responden
 
 
 def _add_table_slide(
-    prs: Presentation, title_text: str, headers: List[str], rows: List[List[Any]]
+    prs: Presentation,
+    title_text: str,
+    headers: List[str],
+    rows: List[List[Any]],
+    status_col_idx: Optional[int] = None,
+    status_map: Optional[Dict[str, str]] = None,
 ) -> None:
-    """Adiciona slide com tabela (formato 16:9)."""
+    """Adiciona slide com tabela (formato 16:9). Opcional: coluna de status com cores."""
     slide = prs.slides.add_slide(prs.slide_layouts[6])
     left = Inches(0.5)
     top = Inches(1)
     width = Inches(12)
-    height = Inches(1)
     title_box = slide.shapes.add_textbox(left, Inches(0.3), width, Inches(0.6))
     title_box.text_frame.paragraphs[0].text = title_text
-    title_box.text_frame.paragraphs[0].font.size = Pt(24)
+    title_box.text_frame.paragraphs[0].font.size = Pt(28)
     title_box.text_frame.paragraphs[0].font.bold = True
+    title_box.text_frame.paragraphs[0].font.color.rgb = COLOR_PRIMARY
     n_cols = len(headers)
     n_rows = len(rows) + 1
     table_height = Inches(0.35 * min(n_rows, 12))
     table = slide.shapes.add_table(n_rows, n_cols, left, top, width, table_height).table
+    status_map = status_map or {}
     for i, h in enumerate(headers):
         cell = table.cell(0, i)
         cell.text = str(h)
-        cell.text_frame.paragraphs[0].font.bold = True
+        p = cell.text_frame.paragraphs[0]
+        p.font.bold = True
+        p.font.size = Pt(11)
+        p.font.color.rgb = COLOR_WHITE
+        try:
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = COLOR_PRIMARY
+        except Exception:
+            pass
     for r_idx, row in enumerate(rows, 1):
         for c_idx, val in enumerate(row):
             if c_idx < n_cols:
-                table.cell(r_idx, c_idx).text = str(val)
+                cell = table.cell(r_idx, c_idx)
+                cell.text = str(val)
+                para = cell.text_frame.paragraphs[0]
+                para.font.size = Pt(11)
+                if status_col_idx is not None and c_idx == status_col_idx:
+                    status_val = str(val).lower().strip()
+                    status_key = "green" if "favor" in status_val else "yellow"
+                    if "crit" in status_val or "critico" in status_val:
+                        status_key = "red"
+                    elif "aten" in status_val:
+                        status_key = "yellow"
+                    colors = STATUS_RGB.get(status_key, STATUS_RGB["yellow"])
+                    try:
+                        cell.fill.solid()
+                        cell.fill.fore_color.rgb = colors[0]
+                    except Exception:
+                        pass
 
 
 def export_pptx(
@@ -301,9 +478,8 @@ def export_pptx(
 ) -> io.BytesIO:
     """Gera apresentacao PowerPoint executiva e retorna BytesIO.
 
-    Conteudo completo: capa, KPIs, resumo, dimensoes, respostas individuais,
-    recomendacoes estruturadas, recomendacoes em prosa (IA), rodape.
-    Formato 16:9. Capa com wallpaper e logo.
+    Ordem: capa, resumo executivo, KPIs cards, radar, barras, resumo numerico,
+    dimensoes, respostas, recomendacoes, prosa, ROI, fechamento. Formato 16:9.
     """
     prs = Presentation()
     prs.slide_width = SLIDE_WIDTH_16_9
@@ -312,26 +488,82 @@ def export_pptx(
     company = survey.get("company_name", "Empresa")
     date_str = datetime.now().strftime("%d/%m/%Y")
     total_resp = summary.get("total", 0) or len(respondents_data)
+
+    # 1. Capa
     _add_title_slide(prs, company, date_str, total_resp)
 
-    kpi_headers = ["Indicador", "Valor", "Status"]
-    kpi_rows = [[kpi["label"], f"{kpi['value']:.2f}", kpi["status"]] for kpi in kpis.values()]
-    _add_table_slide(prs, "Indicadores-Chave (KPIs)", kpi_headers, kpi_rows)
-
+    # 2. Resumo executivo (copywriting)
     slide = prs.slides.add_slide(prs.slide_layouts[6])
-    box = slide.shapes.add_textbox(Inches(0.5), Inches(1), Inches(12), Inches(1.5))
-    p = box.text_frame.paragraphs[0]
-    p.text = f"Resumo: {summary.get('green', 0)} favoraveis | {summary.get('yellow', 0)} atencao | {summary.get('red', 0)} criticas"
-    p.font.size = Pt(18)
+    tit = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(12), Inches(0.6))
+    tit.text_frame.paragraphs[0].text = "Resumo Executivo"
+    tit.text_frame.paragraphs[0].font.size = Pt(28)
+    tit.text_frame.paragraphs[0].font.bold = True
+    tit.text_frame.paragraphs[0].font.color.rgb = COLOR_PRIMARY
+    body = slide.shapes.add_textbox(Inches(0.5), Inches(1.1), Inches(12), Inches(2))
+    body.text_frame.word_wrap = True
+    body.text_frame.paragraphs[0].text = RESUMO_EXECUTIVO
+    body.text_frame.paragraphs[0].font.size = Pt(16)
+    body.text_frame.paragraphs[0].font.color.rgb = COLOR_PRIMARY
+    meta = slide.shapes.add_textbox(Inches(0.5), Inches(3.2), Inches(12), Inches(0.5))
+    meta.text_frame.paragraphs[0].text = f"{company} | {total_resp} respondentes | {date_str}"
+    meta.text_frame.paragraphs[0].font.size = Pt(12)
+    meta.text_frame.paragraphs[0].font.color.rgb = COLOR_SECONDARY
 
+    # 3. KPIs em cards
+    _add_kpi_cards_slide(prs, kpis)
+
+    # 4. Panorama por categoria (radar)
+    if dim_scores_agg:
+        cat_scores = _build_category_scores(dim_scores_agg)
+        try:
+            radar_buf = _render_radar_chart(cat_scores)
+            radar_slide = prs.slides.add_slide(prs.slide_layouts[6])
+            tbox = radar_slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(12), Inches(0.6))
+            tbox.text_frame.paragraphs[0].text = "Panorama por Categoria"
+            tbox.text_frame.paragraphs[0].font.size = Pt(28)
+            tbox.text_frame.paragraphs[0].font.bold = True
+            tbox.text_frame.paragraphs[0].font.color.rgb = COLOR_PRIMARY
+            radar_slide.shapes.add_picture(radar_buf, Inches(0.5), Inches(1.2), Inches(12), Inches(5.5))
+        except Exception:
+            pass
+
+    # 5. Comparativo por dimensao (barras)
+    if dim_scores_agg:
+        try:
+            bar_buf = _render_bar_chart(dim_scores_agg)
+            bar_slide = prs.slides.add_slide(prs.slide_layouts[6])
+            tbox = bar_slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(12), Inches(0.6))
+            tbox.text_frame.paragraphs[0].text = "Comparativo por Dimensao"
+            tbox.text_frame.paragraphs[0].font.size = Pt(28)
+            tbox.text_frame.paragraphs[0].font.bold = True
+            tbox.text_frame.paragraphs[0].font.color.rgb = COLOR_PRIMARY
+            bar_slide.shapes.add_picture(bar_buf, Inches(0.5), Inches(1.2), Inches(12), Inches(5.5))
+        except Exception:
+            pass
+
+    # 6. Resumo numerico
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    tbox = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(12), Inches(0.6))
+    tbox.text_frame.paragraphs[0].text = "Resumo Geral"
+    tbox.text_frame.paragraphs[0].font.size = Pt(28)
+    tbox.text_frame.paragraphs[0].font.bold = True
+    tbox.text_frame.paragraphs[0].font.color.rgb = COLOR_PRIMARY
+    box = slide.shapes.add_textbox(Inches(0.5), Inches(1.1), Inches(12), Inches(1.5))
+    p = box.text_frame.paragraphs[0]
+    p.text = f"{summary.get('green', 0)} dimensoes favoraveis | {summary.get('yellow', 0)} em atencao | {summary.get('red', 0)} criticas"
+    p.font.size = Pt(18)
+    p.font.color.rgb = COLOR_PRIMARY
+
+    # 7. Analise por dimensao (tabela com cores de status)
     dim_headers = ["#", "Dimensao", "Score", "Status", "Tipo", "Categoria", "Descricao"]
     dim_rows = [
         [idx, d["name"], f"{d['score']:.2f}", STATUS_LABEL.get(d["status"], ""),
          "Risco" if d["type"] == "risk" else "Recurso", d["category"], (d.get("description") or "")[:MAX_DIM_DESC_LEN]]
         for idx, d in enumerate(dim_scores_agg, 1)
     ]
-    _add_table_slide(prs, "Analise por Dimensao", dim_headers, dim_rows)
+    _add_table_slide(prs, "Analise por Dimensao", dim_headers, dim_rows, status_col_idx=3)
 
+    # 8. Respostas individuais
     if respondents_data and DIMENSIONS:
         dim_ids = list(DIMENSIONS.keys())
         resp_headers = ["ID"] + [DIMENSIONS[d]["name"][:8] for d in dim_ids]
@@ -345,6 +577,7 @@ def export_pptx(
         if resp_rows:
             _add_table_slide(prs, "Respostas Individuais", resp_headers, resp_rows)
 
+    # 9. Recomendacoes estruturadas
     if recommendations:
         rec_headers = ["#", "Prioridade", "Titulo", "Descricao"]
         rec_rows = [
@@ -352,6 +585,20 @@ def export_pptx(
             for idx, r in enumerate(recommendations, 1)
         ]
         _add_table_slide(prs, "Recomendacoes Estruturadas", rec_headers, rec_rows)
+
+    # 10. Introducao copywriting + Recomendacoes em prosa
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    intro_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(12), Inches(0.8))
+    intro_box.text_frame.word_wrap = True
+    intro_box.text_frame.paragraphs[0].text = "Plano de Acao Recomendado"
+    intro_box.text_frame.paragraphs[0].font.size = Pt(28)
+    intro_box.text_frame.paragraphs[0].font.bold = True
+    intro_box.text_frame.paragraphs[0].font.color.rgb = COLOR_PRIMARY
+    intro_text = slide.shapes.add_textbox(Inches(0.5), Inches(1.0), Inches(12), Inches(0.8))
+    intro_text.text_frame.word_wrap = True
+    intro_text.text_frame.paragraphs[0].text = INTRO_RECOMENDACOES
+    intro_text.text_frame.paragraphs[0].font.size = Pt(12)
+    intro_text.text_frame.paragraphs[0].font.color.rgb = COLOR_PRIMARY
 
     sections = [("Acoes imediatas", "imediata"), ("Curto prazo", "curto_prazo"), ("Medio prazo", "medio_prazo")]
     for title, key in sections:
@@ -362,15 +609,37 @@ def export_pptx(
             tit_box.text_frame.paragraphs[0].text = title
             tit_box.text_frame.paragraphs[0].font.size = Pt(24)
             tit_box.text_frame.paragraphs[0].font.bold = True
+            tit_box.text_frame.paragraphs[0].font.color.rgb = COLOR_PRIMARY
             tx = slide.shapes.add_textbox(Inches(0.5), Inches(1.2), Inches(12), Inches(5))
             tx.text_frame.word_wrap = True
             tx.text_frame.paragraphs[0].text = text.strip()[:MAX_PROSE_LEN]
             tx.text_frame.paragraphs[0].font.size = Pt(12)
 
+    # 11. Slide ROI/beneficios
+    roi_slide = prs.slides.add_slide(prs.slide_layouts[6])
+    roi_tit = roi_slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(12), Inches(0.6))
+    roi_tit.text_frame.paragraphs[0].text = ROI_TITULO
+    roi_tit.text_frame.paragraphs[0].font.size = Pt(28)
+    roi_tit.text_frame.paragraphs[0].font.bold = True
+    roi_tit.text_frame.paragraphs[0].font.color.rgb = COLOR_PRIMARY
+    roi_body = roi_slide.shapes.add_textbox(Inches(0.5), Inches(1.2), Inches(12), Inches(4))
+    tf = roi_body.text_frame
+    tf.word_wrap = True
+    for i, bullet in enumerate(ROI_BULLETS):
+        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+        p.text = f"- {bullet}"
+        p.font.size = Pt(16)
+        p.font.color.rgb = COLOR_PRIMARY
+        if i > 0:
+            p.space_before = Pt(8)
+
+    # 12. Fechamento CTA
     footer_slide = prs.slides.add_slide(prs.slide_layouts[6])
     fb = footer_slide.shapes.add_textbox(Inches(0.5), Inches(2), Inches(12), Inches(2))
-    fb.text_frame.paragraphs[0].text = "Fluir — Bem-estar que move resultados. COPSOQ II. Documento confidencial."
+    fb.text_frame.word_wrap = True
+    fb.text_frame.paragraphs[0].text = FECHAMENTO_CTA
     fb.text_frame.paragraphs[0].font.size = Pt(14)
+    fb.text_frame.paragraphs[0].font.color.rgb = COLOR_PRIMARY
 
     buf = io.BytesIO()
     prs.save(buf)
