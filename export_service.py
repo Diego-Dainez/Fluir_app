@@ -5,6 +5,7 @@ Fluir — Servico de Exportacao (Excel + PPT)
 import io
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List
 
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -42,12 +43,24 @@ SLIDE_HEIGHT_16_9 = Inches(7.5)
 LOGO_SIZE_INCHES = 1.0
 IMG_DIR = Path(__file__).resolve().parent / "static" / "img"
 
+# Limites de truncamento para export
+MAX_DIM_DESC_LEN = 50
+MAX_REC_DESC_LEN = 80
+MAX_PROSE_LEN = 2000
+
 
 # ══════════════════════════════════════════════
 # EXCEL EXPORT
 # ══════════════════════════════════════════════
 
-def export_excel(survey, respondents_data, dim_scores_agg, kpis, summary, recommendations) -> io.BytesIO:
+def export_excel(
+    survey: Dict[str, Any],
+    respondents_data: List[Dict[str, Any]],
+    dim_scores_agg: List[Dict[str, Any]],
+    kpis: Dict[str, Any],
+    summary: Dict[str, Any],
+    recommendations: List[Dict[str, Any]],
+) -> io.BytesIO:
     """Gera Excel completo e retorna BytesIO."""
     wb = Workbook()
     CENTER = Alignment(horizontal="center", vertical="center", wrap_text=True)
@@ -250,7 +263,9 @@ def _add_title_slide(prs: Presentation, company: str, date: str, total_responden
     tb2.text_frame.paragraphs[0].font.size = Pt(14)
 
 
-def _add_table_slide(prs: Presentation, title_text: str, headers: list, rows: list) -> None:
+def _add_table_slide(
+    prs: Presentation, title_text: str, headers: List[str], rows: List[List[Any]]
+) -> None:
     """Adiciona slide com tabela (formato 16:9)."""
     slide = prs.slides.add_slide(prs.slide_layouts[6])
     left = Inches(0.5)
@@ -276,13 +291,13 @@ def _add_table_slide(prs: Presentation, title_text: str, headers: list, rows: li
 
 
 def export_pptx(
-    survey,
-    respondents_data,
-    dim_scores_agg,
-    kpis,
-    summary,
-    recommendations,
-    recommendations_prose,
+    survey: Dict[str, Any],
+    respondents_data: List[Dict[str, Any]],
+    dim_scores_agg: List[Dict[str, Any]],
+    kpis: Dict[str, Any],
+    summary: Dict[str, Any],
+    recommendations: List[Dict[str, Any]],
+    recommendations_prose: Dict[str, str],
 ) -> io.BytesIO:
     """Gera apresentacao PowerPoint executiva e retorna BytesIO.
 
@@ -312,7 +327,7 @@ def export_pptx(
     dim_headers = ["#", "Dimensao", "Score", "Status", "Tipo", "Categoria", "Descricao"]
     dim_rows = [
         [idx, d["name"], f"{d['score']:.2f}", STATUS_LABEL.get(d["status"], ""),
-         "Risco" if d["type"] == "risk" else "Recurso", d["category"], (d.get("description") or "")[:50]]
+         "Risco" if d["type"] == "risk" else "Recurso", d["category"], (d.get("description") or "")[:MAX_DIM_DESC_LEN]]
         for idx, d in enumerate(dim_scores_agg, 1)
     ]
     _add_table_slide(prs, "Analise por Dimensao", dim_headers, dim_rows)
@@ -333,7 +348,7 @@ def export_pptx(
     if recommendations:
         rec_headers = ["#", "Prioridade", "Titulo", "Descricao"]
         rec_rows = [
-            [idx, PRIORITY_LABEL.get(r.get("priority", ""), r.get("priority", "")), r.get("title", ""), (r.get("description") or "")[:80]]
+            [idx, PRIORITY_LABEL.get(r.get("priority", ""), r.get("priority", "")), r.get("title", ""), (r.get("description") or "")[:MAX_REC_DESC_LEN]]
             for idx, r in enumerate(recommendations, 1)
         ]
         _add_table_slide(prs, "Recomendacoes Estruturadas", rec_headers, rec_rows)
@@ -349,7 +364,7 @@ def export_pptx(
             tit_box.text_frame.paragraphs[0].font.bold = True
             tx = slide.shapes.add_textbox(Inches(0.5), Inches(1.2), Inches(12), Inches(5))
             tx.text_frame.word_wrap = True
-            tx.text_frame.paragraphs[0].text = text.strip()[:2000]
+            tx.text_frame.paragraphs[0].text = text.strip()[:MAX_PROSE_LEN]
             tx.text_frame.paragraphs[0].font.size = Pt(12)
 
     footer_slide = prs.slides.add_slide(prs.slide_layouts[6])

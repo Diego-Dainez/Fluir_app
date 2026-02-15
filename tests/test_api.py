@@ -169,6 +169,22 @@ class TestDashboard:
         assert "recommendations" in data
 
 
+class TestLandingPage:
+    """Testes da pagina de landing."""
+
+    def test_landing_retorna_html_200(self, client):
+        """GET /landing deve retornar HTML com status 200."""
+        r = client.get("/landing")
+        assert r.status_code == 200
+        assert "text/html" in r.headers.get("content-type", "")
+
+    def test_landing_contem_headline_fluir(self, client):
+        """Pagina de landing deve conter o headline principal."""
+        r = client.get("/landing")
+        assert r.status_code == 200
+        assert "Pesquisa, análise e recomendações em um clique" in r.text
+
+
 class TestRecoverCode:
     """Testes do endpoint de recuperacao de chave."""
 

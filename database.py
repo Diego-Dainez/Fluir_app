@@ -45,7 +45,7 @@ class Survey(Base):
     id = Column(String, primary_key=True, default=generate_uuid)
     code = Column(String(8), unique=True, nullable=False, default=generate_code)
     company_name = Column(String(200), nullable=False, default="Empresa")
-    admin_code = Column(String(50), nullable=False, default="fluir2026")
+    admin_code = Column(String(50), nullable=False, default="/admin")
     thank_you_title = Column(String(200), default="Obrigado pela sua participação!")
     thank_you_message = Column(Text, default="Suas respostas foram registradas com sucesso. Elas são anônimas e confidenciais, e contribuirão para melhorar o ambiente de trabalho.")
     is_active = Column(Boolean, default=True)

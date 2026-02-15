@@ -12,31 +12,43 @@
 <body class="admin-layout">
 
     <!-- SIDEBAR -->
-    <aside class="admin-sidebar" id="sidebar">
+    <aside class="admin-sidebar open" id="sidebar">
         <div class="sidebar-logo">
-            <img src="/static/img/fluir_logo.png" alt="Fluir">
-            <h2>Fluir</h2>
+            <div class="sidebar-logo-row">
+                <img src="/static/img/fluir_logo.png" alt="Fluir">
+                <h2>Fluir</h2>
+                <button class="btn btn-ghost sidebar-hamburger sidebar-hamburger-inner" id="sidebarHamburger" onclick="toggleSidebar()" aria-label="Abrir ou fechar menu">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                </button>
+            </div>
             <span>Painel de Gestao</span>
         </div>
         <nav class="sidebar-nav">
-            <a href="#" class="nav-link active" data-tab="surveys" onclick="switchTab('surveys')">
-                <span class="nav-icon">📋</span> Pesquisas
+            <a href="#" class="nav-link active" data-tab="surveys" onclick="switchTab('surveys')" title="Pesquisas">
+                <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14h6"/><path d="M9 18h6"/></svg></span>
+                <span class="nav-label">Pesquisas</span>
             </a>
-            <a href="#" class="nav-link" data-tab="dashboard" onclick="switchTab('dashboard')" id="nav-dashboard"
+            <a href="#" class="nav-link" data-tab="dashboard" onclick="switchTab('dashboard')" id="nav-dashboard" title="Dashboard"
                 style="display:none;">
-                <span class="nav-icon">📊</span> Dashboard
+                <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
+                <span class="nav-label">Dashboard</span>
             </a>
-            <a href="#" class="nav-link" data-tab="responses" onclick="switchTab('responses')" id="nav-responses"
+            <a href="#" class="nav-link" data-tab="responses" onclick="switchTab('responses')" id="nav-responses" title="Respostas"
                 style="display:none;">
-                <span class="nav-icon">👥</span> Respostas
+                <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+                <span class="nav-label">Respostas</span>
             </a>
         </nav>
         <div class="sidebar-footer">
-            <button class="btn btn-ghost w-full" onclick="logout()">
-                <span class="nav-icon">🚪</span> Sair
+            <button class="btn btn-ghost w-full" onclick="logout()" title="Sair">
+                <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+                <span class="nav-label">Sair</span>
             </button>
         </div>
     </aside>
+
+    <!-- SIDEBAR OVERLAY (mobile) -->
+    <div class="sidebar-overlay hidden" id="sidebarOverlay" onclick="toggleSidebar()" aria-hidden="true"></div>
 
     <!-- MAIN CONTENT -->
     <main class="admin-main">
@@ -57,7 +69,7 @@
                 <!-- Survey cards injected here -->
             </div>
             <div id="emptyState" class="empty-state hidden">
-                <span class="empty-icon">📭</span>
+                <span class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/></svg></span>
                 <h3>Nenhuma pesquisa encontrada</h3>
                 <p>Crie sua primeira pesquisa para começar.</p>
             </div>
@@ -86,11 +98,15 @@
             <div class="chart-grid">
                 <div class="chart-card">
                     <h3>Panorama Geral</h3>
-                    <canvas id="radarChart"></canvas>
+                    <div class="chart-container">
+                        <canvas id="radarChart"></canvas>
+                    </div>
                 </div>
                 <div class="chart-card">
                     <h3>Comparativo por Dimensao</h3>
-                    <canvas id="barChart"></canvas>
+                    <div class="chart-container">
+                        <canvas id="barChart"></canvas>
+                    </div>
                 </div>
             </div>
             <div class="admin-card mt-4" id="dimensionsTableCard">
@@ -168,6 +184,23 @@
         </div>
     </div>
 
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="deleteConfirmModal" onclick="if (event.target === this) closeDeleteConfirmModal()">
+        <div class="modal" style="max-width: 420px;" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Excluir pesquisa</h3>
+                <button class="modal-close" onclick="closeDeleteConfirmModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="deleteConfirmMessage" class="mb-3">Tem certeza que deseja excluir esta pesquisa? Esta acao nao pode ser desfeita.</p>
+                <div class="flex gap-2 justify-end mt-3">
+                    <button type="button" class="btn btn-ghost" onclick="closeDeleteConfirmModal()">Cancelar</button>
+                    <button type="button" class="btn" id="deleteConfirmBtn" style="background: var(--red); color: white;" onclick="executeDeleteSurvey()">Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast" class="toast hidden">
         <span id="toastIcon">INFO</span>
@@ -188,6 +221,7 @@
         let dashboardData = null;
         let radarChart = null;
         let barChart = null;
+        let pendingDeleteSurveyId = null;
         const ADMIN_CODE = sessionStorage.getItem('fluir_admin_code');
 
         if (!ADMIN_CODE) window.location.href = '/';
@@ -216,6 +250,7 @@
 
         // TABS
         function switchTab(tabId) {
+            closeSidebarIfMobile();
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
 
@@ -231,8 +266,8 @@
                 document.getElementById('pageTitle').textContent = 'Dashboard';
                 if (currentSurveyId) {
                     actions.innerHTML = `
-                        <button class="btn btn-secondary" onclick="exportReport('${currentSurveyId}', 'pptx')">PPT</button>
-                        <button class="btn btn-secondary" onclick="exportReport('${currentSurveyId}', 'excel')">Excel</button>
+                        <button class="btn btn-export-ppt" onclick="exportReport('${currentSurveyId}', 'pptx')">PPT</button>
+                        <button class="btn btn-export-excel" onclick="exportReport('${currentSurveyId}', 'excel')">Excel</button>
                     `;
                     loadDashboard(currentSurveyId);
                 }
@@ -319,10 +354,24 @@
             input.replaceWith(origH3);
         }
 
-        async function confirmDeleteSurvey(id) {
+        function confirmDeleteSurvey(id) {
             const s = surveys.find(x => x.id === id);
             const companyName = s ? s.company_name : 'esta pesquisa';
-            if (!confirm('Tem certeza que deseja excluir a pesquisa "' + companyName.replace(/"/g, '\\"') + '"? Esta acao nao pode ser desfeita.')) return;
+            pendingDeleteSurveyId = id;
+            document.getElementById('deleteConfirmMessage').textContent =
+                'Tem certeza que deseja excluir a pesquisa "' + companyName + '"? Esta acao nao pode ser desfeita.';
+            document.getElementById('deleteConfirmModal').classList.add('show');
+        }
+
+        function closeDeleteConfirmModal() {
+            pendingDeleteSurveyId = null;
+            document.getElementById('deleteConfirmModal').classList.remove('show');
+        }
+
+        async function executeDeleteSurvey() {
+            const id = pendingDeleteSurveyId;
+            if (!id) return;
+            closeDeleteConfirmModal();
             try {
                 const res = await fetch('/api/admin/surveys/delete?survey_id=' + encodeURIComponent(id) + '&admin_code=' + encodeURIComponent(ADMIN_CODE), { method: 'POST' });
                 if (res.ok) {
@@ -531,12 +580,13 @@
                     }]
                 },
                 options: {
+                    maintainAspectRatio: false,
                     scales: {
                         r: {
                             min: 0,
                             max: 5,
-                            ticks: { display: false, font: { size: 14 } },
-                            pointLabels: { font: { size: 15 } }
+                            ticks: { display: false, font: { size: 12 } },
+                            pointLabels: { font: { size: 13 } }
                         }
                     },
                     plugins: { legend: { display: false } }
@@ -568,14 +618,13 @@
                 options: {
                     indexAxis: 'y',
                     scales: {
-                        x: { min: 0, max: 5, ticks: { font: { size: 14 } } },
-                        y: { ticks: { font: { size: 14 }, autoSkip: false } }
+                        x: { min: 0, max: 5, ticks: { font: { size: 13 } } },
+                        y: { ticks: { font: { size: 13 }, autoSkip: false } }
                     },
                     plugins: { legend: { display: false } },
                     maintainAspectRatio: false
                 }
             });
-            ctxBar.canvas.parentNode.style.height = '600px';
 
             // Tabela Dimensoes (igual Excel aba Dimensoes, sem coluna Descricao)
             if (dimTbody) {
@@ -684,6 +733,53 @@
             el.classList.remove('hidden');
             setTimeout(() => el.classList.add('hidden'), 3000);
         }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const isMobile = window.innerWidth <= 768;
+            if (sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+                document.body.classList.add('sidebar-closed');
+                if (isMobile) {
+                    overlay.classList.add('hidden');
+                    overlay.setAttribute('aria-hidden', 'true');
+                }
+            } else {
+                sidebar.classList.add('open');
+                document.body.classList.remove('sidebar-closed');
+                if (isMobile) {
+                    overlay.classList.remove('hidden');
+                    overlay.setAttribute('aria-hidden', 'false');
+                }
+            }
+        }
+
+        function closeSidebarIfMobile() {
+            if (window.innerWidth <= 768) {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                sidebar.classList.remove('open');
+                document.body.classList.remove('sidebar-closed');
+                overlay.classList.add('hidden');
+                overlay.setAttribute('aria-hidden', 'true');
+            }
+        }
+
+        // Atualiza estado do body ao redimensionar (ex.: mobile -> desktop)
+        window.addEventListener('resize', function () {
+            if (window.innerWidth > 768) {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar.classList.contains('open')) {
+                    document.body.classList.remove('sidebar-closed');
+                } else {
+                    document.body.classList.add('sidebar-closed');
+                }
+                document.getElementById('sidebarOverlay').classList.add('hidden');
+            } else {
+                document.body.classList.remove('sidebar-closed');
+            }
+        });
 
         function logout() {
             sessionStorage.clear();

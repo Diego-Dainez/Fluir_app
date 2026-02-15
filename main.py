@@ -5,6 +5,7 @@ Bem-estar que move resultados
 
 import io
 import json
+import logging
 import os
 import smtplib
 import base64
@@ -18,13 +19,14 @@ from fastapi import FastAPI, HTTPException, Depends, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
 import qrcode
 from pydantic import BaseModel, Field
 from collections import defaultdict
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from database import init_db, get_db, SessionLocal, Survey, Respondent, Recommendation, AdminRecoveryEmail, generate_uuid, generate_code
 from copsoq_data import QUESTIONS, DIMENSIONS, CATEGORIES, SCALE_LABELS
@@ -45,6 +47,68 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def _parse_origin(origin: str) -> Optional[str]:
+    """Extrai protocolo e host de uma string Origin ou Referer."""
+    if not origin or not origin.strip():
+        return None
+    s = origin.strip()
+    if "://" in s:
+        try:
+            proto, rest = s.split("://", 1)
+            host = rest.split("/")[0].split("?")[0].lower()
+            return f"{proto}://{host}"
+        except Exception:
+            return None
+    return None
+
+
+def _is_origin_allowed(origin: str, request_host: str, request_scheme: str) -> bool:
+    """Verifica se a origem esta na whitelist (mesmo host ou lista configurada)."""
+    parsed = _parse_origin(origin)
+    if not parsed:
+        return True
+    allowed_env = os.getenv("FLUIR_ALLOWED_ORIGINS", "").strip()
+    if allowed_env:
+        allowed = [a.strip().lower() for a in allowed_env.split(",") if a.strip()]
+        if parsed.lower() in allowed:
+            return True
+    same_origin = f"{request_scheme}://{request_host}".lower()
+    return parsed == same_origin
+
+
+class OriginCheckMiddleware(BaseHTTPMiddleware):
+    """Valida cabecalho Origin/Referer em rotas admin de escrita (defense-in-depth)."""
+
+    async def dispatch(self, request, call_next):
+        path = request.scope.get("path", "")
+        method = request.scope.get("method", "")
+        if not path.startswith("/api/admin") or method not in (
+            "POST",
+            "PUT",
+            "DELETE",
+            "PATCH",
+        ):
+            return await call_next(request)
+
+        origin = request.headers.get("Origin") or request.headers.get("Referer")
+        if not origin:
+            return await call_next(request)
+
+        host = request.headers.get("Host", "").strip() or "localhost"
+        scheme = request.headers.get("X-Forwarded-Proto") or request.scope.get(
+            "scheme", "http"
+        )
+        if not _is_origin_allowed(origin, host, scheme):
+            return JSONResponse(
+                status_code=403,
+                content={"detail": "Origin nao autorizado"},
+            )
+        return await call_next(request)
+
+
+app.add_middleware(OriginCheckMiddleware)
 
 static_path = Path(__file__).parent / "static"
 static_path.mkdir(exist_ok=True)
@@ -81,7 +145,7 @@ class AdminLogin(BaseModel):
 
 class SurveyCreate(BaseModel):
     company_name: str = Field(..., max_length=200)
-    admin_code: str = Field(default="fluir2026", max_length=50)
+    admin_code: str = Field(default="/admin", max_length=50)
 
 class SurveySettings(BaseModel):
     thank_you_title: Optional[str] = None
@@ -104,6 +168,12 @@ class RecoverCodeRequest(BaseModel):
 async def root():
     return (static_path / "login.html").read_text(encoding="utf-8")
 
+
+@app.get("/landing", response_class=HTMLResponse)
+async def landing_page():
+    return (static_path / "landing.html").read_text(encoding="utf-8")
+
+
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_page():
     return (static_path / "admin.html").read_text(encoding="utf-8")
@@ -120,7 +190,22 @@ async def survey_page(code: str, db: Session = Depends(get_db)):
 # ADMIN API
 # ════════════════════════════════════════════
 
-GLOBAL_ADMIN_CODE = os.getenv("FLUIR_ADMIN_CODE", "fluir2026")
+def _resolve_admin_code() -> str:
+    """Resolve codigo admin: em producao exige FLUIR_ADMIN_CODE; em dev usa fallback."""
+    raw = os.getenv("FLUIR_ADMIN_CODE")
+    is_production = (
+        "postgres" in os.getenv("DATABASE_URL", "").lower()
+        or os.getenv("RENDER") is not None
+    )
+    if is_production and not (raw and raw.strip()):
+        raise RuntimeError(
+            "FLUIR_ADMIN_CODE deve ser definido em producao. "
+            "Configure a variavel de ambiente antes de iniciar o app."
+        )
+    return (raw or "/admin").strip()
+
+
+GLOBAL_ADMIN_CODE = _resolve_admin_code()
 
 @app.post("/api/admin/login")
 def admin_login(body: AdminLogin, db: Session = Depends(get_db)):
@@ -142,7 +227,7 @@ def recover_code(body: RecoverCodeRequest, db: Session = Depends(get_db)):
     if not exists:
         return {"message": "Se o email estiver cadastrado, voce recebera a chave em instantes."}
 
-    admin_code = os.getenv("FLUIR_ADMIN_CODE", "fluir2026")
+    admin_code = GLOBAL_ADMIN_CODE
     smtp_host = os.getenv("SMTP_HOST")
     smtp_port = int(os.getenv("SMTP_PORT", "587"))
     smtp_user = os.getenv("SMTP_USER")
@@ -167,8 +252,10 @@ Guarde esta informacao em local seguro. Nao compartilhe com terceiros."""
             server.starttls()
             server.login(smtp_user, smtp_pass)
             server.sendmail(smtp_from, email, msg.as_string())
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.getLogger(__name__).warning(
+            "Recover code email failed: %s", exc, exc_info=True
+        )
 
     return {"message": "Se o email estiver cadastrado, voce recebera a chave em instantes."}
 
@@ -462,7 +549,7 @@ def _get_survey_auth(survey_id: str, admin_code: str, db: Session) -> Survey:
     return survey
 
 
-def _survey_brief(s: Survey, db: Session) -> dict:
+def _survey_brief(s: Survey, db: Session) -> Dict[str, Any]:
     count = db.query(Respondent).filter(Respondent.survey_id == s.id).count()
     return {
         "id": s.id,
@@ -474,14 +561,14 @@ def _survey_brief(s: Survey, db: Session) -> dict:
     }
 
 
-def _survey_detail(s: Survey, db: Session) -> dict:
+def _survey_detail(s: Survey, db: Session) -> Dict[str, Any]:
     brief = _survey_brief(s, db)
     brief["thank_you_title"] = s.thank_you_title
     brief["thank_you_message"] = s.thank_you_message
     return brief
 
 
-def _aggregate_dim_scores(all_scores: list) -> list:
+def _aggregate_dim_scores(all_scores: List[List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
     """Average dimension scores across all respondents."""
     totals = defaultdict(lambda: {"scores": [], "type": None, "name": None, "category": None, "description": None})
     for respondent_scores in all_scores:
@@ -509,7 +596,7 @@ def _aggregate_dim_scores(all_scores: list) -> list:
     return result
 
 
-def _get_export_data(survey: Survey, db: Session) -> dict:
+def _get_export_data(survey: Survey, db: Session) -> Dict[str, Any]:
     respondents = db.query(Respondent).filter(Respondent.survey_id == survey.id).order_by(Respondent.submitted_at).all()
     if not respondents:
         return {"dim_scores": [], "kpis": {}, "summary": {"green": 0, "yellow": 0, "red": 0, "total": 0}, "recommendations": [], "respondents_data": []}

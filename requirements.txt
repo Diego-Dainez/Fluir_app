@@ -10,3 +10,4 @@ openpyxl>=3.1.2
 qrcode[pil]>=7.4.2
 google-genai>=0.1.0
 python-pptx>=0.6.23
+pypdf>=4.0.0
