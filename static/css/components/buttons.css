@@ -1,0 +1,111 @@
+/* Botoes com micro-interacoes aprimoradas */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform var(--transition-spring), box-shadow var(--transition);
+    text-decoration: none;
+    line-height: 1;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-800) 0%, var(--primary-600) 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(74, 90, 122, 0.25);
+}
+
+.btn-primary:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(74, 90, 122, 0.35);
+}
+
+.btn-primary:not(:disabled):active {
+    transform: scale(0.98);
+}
+
+.btn-accent {
+    background: linear-gradient(135deg, var(--accent-600) 0%, var(--accent-500) 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(164, 139, 190, 0.3);
+}
+
+.btn-accent:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(164, 139, 190, 0.4);
+}
+
+.btn-secondary {
+    background: var(--text-100);
+    color: var(--text-700);
+}
+
+.btn-secondary:hover {
+    background: var(--text-200);
+}
+
+.btn-export-ppt {
+    background: #e72a3f;
+    color: white;
+}
+
+.btn-export-ppt:hover {
+    background: #c92336;
+}
+
+.btn-export-excel {
+    background: #31a966;
+    color: white;
+}
+
+.btn-export-excel:hover {
+    background: #298f54;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 2px solid var(--primary-600);
+    color: var(--primary-600);
+}
+
+.btn-outline:hover {
+    background: var(--primary-50);
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--text-600);
+    padding: var(--space-1) var(--space-2);
+}
+
+.btn-ghost:hover {
+    background: var(--bg-hover);
+}
+
+.btn-sm {
+    padding: var(--space-1) var(--space-2);
+    font-size: 0.85rem;
+}
+
+.btn-lg {
+    padding: var(--space-2) var(--space-4);
+    font-size: 1.1rem;
+}
+
+.btn-icon {
+    padding: 10px;
+    border-radius: var(--radius-sm);
+}

@@ -1,0 +1,70 @@
+/* Layout Login */
+
+.login-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: url('/static/img/wallpaper_home.png') center center / cover no-repeat fixed;
+    padding: var(--space-3);
+    position: relative;
+}
+
+.login-container::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(74, 90, 122, 0.15);
+}
+
+.login-card {
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.97);
+}
+
+.login-card .card-body {
+    padding: var(--space-5);
+}
+
+.login-logo {
+    margin-bottom: var(--space-1);
+}
+
+.login-logo img {
+    width: 100px;
+    height: 100px;
+    border-radius: var(--radius-lg);
+    object-fit: cover;
+}
+
+.login-logo-text {
+    font-size: var(--font-size-2xl);
+    font-weight: 800;
+    color: var(--primary-800);
+    margin-top: var(--space-1);
+}
+
+.login-tagline {
+    color: var(--text-500);
+    font-size: 0.9rem;
+    margin-bottom: var(--space-4);
+}
+
+.login-error {
+    background: var(--red-bg);
+    color: var(--red-dark);
+    padding: 10px var(--space-2);
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--space-2);
+    font-size: 0.9rem;
+    display: none;
+}
+
+.login-error.show {
+    display: block;
+    animation: fadeSlideIn 0.3s ease;
+}

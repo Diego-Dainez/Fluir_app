@@ -1,0 +1,75 @@
+/* Formularios e inputs */
+
+.input {
+    width: 100%;
+    padding: var(--space-2) var(--space-2);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-base);
+    color: var(--text-800);
+    background: var(--bg-white);
+    transition: var(--transition);
+    outline: none;
+}
+
+.input:focus {
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 3px rgba(139, 167, 200, 0.2);
+}
+
+.input::placeholder {
+    color: var(--text-400);
+}
+
+textarea.input {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-group {
+    margin-bottom: var(--space-3);
+}
+
+.form-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-700);
+    font-size: 0.9rem;
+}
+
+.admin-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    color: var(--text-800);
+    background: var(--bg-white);
+    outline: none;
+    transition: var(--transition);
+}
+
+.admin-input:focus {
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 3px rgba(139, 167, 200, 0.15);
+}
+
+textarea.admin-input {
+    resize: vertical;
+    min-height: 80px;
+}
+
+select.admin-input {
+    cursor: pointer;
+}
+
+.admin-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-600);
+    margin-bottom: 6px;
+    font-weight: 600;
+}

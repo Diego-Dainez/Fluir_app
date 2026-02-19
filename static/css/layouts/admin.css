@@ -1,0 +1,315 @@
+/* Layout Admin Dashboard */
+
+.admin-layout {
+    display: flex;
+    min-height: 100vh;
+    background: var(--bg-primary);
+    color: var(--text-800);
+}
+
+.admin-sidebar {
+    width: 260px;
+    background: var(--bg-white);
+    border-right: 1px solid var(--border-color);
+    padding: var(--space-3) 0;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 200;
+    transition: width 0.3s ease, padding 0.3s ease, min-width 0.3s ease;
+    box-shadow: 2px 0 8px rgba(74, 90, 122, 0.04);
+}
+
+.sidebar-logo {
+    padding: 0 var(--space-3) var(--space-3);
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: var(--space-2);
+}
+
+.sidebar-logo-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.sidebar-logo-row .sidebar-hamburger-inner {
+    margin-left: auto;
+}
+
+.sidebar-logo img {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    vertical-align: middle;
+    margin-right: var(--space-1);
+}
+
+.sidebar-logo h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--primary-800);
+    display: inline;
+    vertical-align: middle;
+}
+
+.sidebar-logo span {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-500);
+    margin-top: 4px;
+}
+
+.sidebar-nav {
+    flex: 1;
+    padding: 0 12px;
+}
+
+.sidebar-nav a {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    color: var(--text-600);
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: var(--transition);
+    margin-bottom: 4px;
+}
+
+.sidebar-nav a:hover {
+    background: var(--bg-hover);
+    color: var(--text-900);
+}
+
+.sidebar-nav a.active {
+    background: var(--primary-100);
+    color: var(--primary-800);
+    font-weight: 600;
+}
+
+.sidebar-nav a .nav-icon {
+    width: 24px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: inherit;
+    display: inline-flex;
+    align-items: center;
+}
+
+.sidebar-nav a .nav-icon svg,
+.sidebar-footer .nav-icon svg {
+    flex-shrink: 0;
+    color: inherit;
+}
+
+.sidebar-footer {
+    padding: var(--space-2) var(--space-3);
+    border-top: 1px solid var(--border-color);
+}
+
+.admin-main {
+    flex: 1;
+    margin-left: 260px;
+    padding: var(--space-4);
+    overflow-y: auto;
+    transition: margin-left 0.3s ease;
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-4);
+}
+
+.admin-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-900);
+}
+
+.admin-header-actions {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.survey-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+}
+
+.chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+    align-items: stretch;
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(74, 90, 122, 0.4);
+    z-index: 150;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay:not(.hidden) {
+    display: block;
+}
+
+.sidebar-hamburger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-1);
+}
+
+.sidebar-hamburger svg {
+    display: block;
+}
+
+@media (min-width: 769px) {
+    .admin-sidebar:not(.open) {
+        width: 56px;
+        min-width: 56px;
+        padding: var(--space-2) 0;
+    }
+
+    .admin-sidebar:not(.open) .sidebar-logo {
+        padding: 0 12px 12px;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 12px;
+    }
+
+    .admin-sidebar:not(.open) .sidebar-logo-row img,
+    .admin-sidebar:not(.open) .sidebar-logo-row h2,
+    .admin-sidebar:not(.open) .sidebar-logo span {
+        display: none;
+    }
+
+    .admin-sidebar:not(.open) .sidebar-logo-row .sidebar-hamburger-inner {
+        margin-left: 0;
+    }
+
+    .admin-sidebar:not(.open) .sidebar-logo-row {
+        justify-content: center;
+    }
+
+    .admin-sidebar:not(.open) .sidebar-nav .nav-label,
+    .admin-sidebar:not(.open) .sidebar-footer .nav-label {
+        display: none;
+    }
+
+    .admin-sidebar:not(.open) .sidebar-nav {
+        padding: 0 12px;
+    }
+
+    .admin-sidebar:not(.open) .sidebar-nav a {
+        justify-content: center;
+        padding: 10px;
+    }
+
+    .admin-sidebar:not(.open) .sidebar-footer {
+        padding: 12px;
+    }
+
+    .admin-sidebar:not(.open) .sidebar-footer button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 10px;
+    }
+}
+
+body.sidebar-closed .admin-main {
+    margin-left: 56px;
+}
+
+@media (max-width: 1024px) {
+    .chart-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar-hamburger.hidden {
+        display: none;
+    }
+
+    .admin-sidebar:not(.open) {
+        width: 56px;
+        min-width: 56px;
+        padding: var(--space-2) 0;
+    }
+
+    .admin-sidebar:not(.open) .sidebar-logo {
+        padding: 0 12px 12px;
+        margin-bottom: 12px;
+    }
+
+    .admin-sidebar:not(.open) .sidebar-logo-row img,
+    .admin-sidebar:not(.open) .sidebar-logo-row h2,
+    .admin-sidebar:not(.open) .sidebar-logo span {
+        display: none;
+    }
+
+    .admin-sidebar:not(.open) .sidebar-nav .nav-label,
+    .admin-sidebar:not(.open) .sidebar-footer .nav-label {
+        display: none;
+    }
+
+    .admin-sidebar:not(.open) .sidebar-logo-row .sidebar-hamburger-inner {
+        margin-left: 0;
+    }
+
+    .admin-sidebar:not(.open) .sidebar-logo-row {
+        justify-content: center;
+    }
+
+    .admin-sidebar:not(.open) .sidebar-nav a {
+        justify-content: center;
+        padding: 10px;
+    }
+
+    .admin-sidebar:not(.open) .sidebar-footer {
+        padding: 12px;
+    }
+
+    .admin-sidebar:not(.open) .sidebar-footer button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 10px;
+    }
+
+    body:not(.sidebar-closed) .admin-main {
+        margin-left: 0;
+    }
+
+    .kpi-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+}

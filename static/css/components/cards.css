@@ -1,0 +1,121 @@
+/* Cards com hover spring physics */
+
+.card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    transition: transform var(--transition-spring), box-shadow var(--transition);
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.card-body {
+    padding: var(--space-3);
+}
+
+.admin-card {
+    background: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    margin-bottom: var(--space-3);
+    transition: var(--transition);
+}
+
+.admin-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.admin-card h3 {
+    font-size: 0.8rem;
+    color: var(--text-600);
+    margin-bottom: var(--space-2);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.kpi-card {
+    background: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    position: relative;
+    overflow: hidden;
+    transition: transform var(--transition-spring), box-shadow var(--transition);
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+}
+
+.kpi-card.green::before { background: var(--green); }
+.kpi-card.yellow::before { background: var(--yellow); }
+.kpi-card.red::before { background: var(--red); }
+
+.kpi-label {
+    font-size: 0.8rem;
+    color: var(--text-500);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--space-1);
+}
+
+.kpi-value {
+    font-family: var(--font-mono);
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.kpi-value.green { color: var(--green); }
+.kpi-value.yellow { color: var(--yellow); }
+.kpi-value.red { color: var(--red); }
+
+.kpi-status {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-600);
+}
+
+.chart-card {
+    background: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-card h3 {
+    margin-bottom: var(--space-2);
+    color: var(--text-800);
+    flex-shrink: 0;
+}
+
+.chart-card .chart-container {
+    flex: 1;
+    min-height: 300px;
+    height: 320px;
+    position: relative;
+}
+
+.chart-card .chart-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
