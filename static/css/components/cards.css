@@ -13,6 +13,13 @@
     box-shadow: var(--shadow-lg);
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .card:hover,
+    .kpi-card:hover {
+        transform: none;
+    }
+}
+
 .card-body {
     padding: var(--space-3);
 }
@@ -24,10 +31,16 @@
     padding: var(--space-3);
     margin-bottom: var(--space-3);
     transition: var(--transition);
+    cursor: pointer;
 }
 
 .admin-card:hover {
     box-shadow: var(--shadow-md);
+}
+
+.admin-card:focus-visible {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 2px;
 }
 
 .admin-card h3 {

@@ -13,8 +13,11 @@
     font-weight: 600;
     cursor: pointer;
     transition: transform var(--transition-spring), box-shadow var(--transition);
-    text-decoration: none;
-    line-height: 1;
+}
+
+.btn:focus-visible {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 2px;
 }
 
 .btn:disabled {
@@ -40,12 +43,12 @@
 .btn-accent {
     background: linear-gradient(135deg, var(--accent-600) 0%, var(--accent-500) 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(164, 139, 190, 0.3);
+    box-shadow: 0 4px 15px rgba(91, 138, 122, 0.3);
 }
 
 .btn-accent:not(:disabled):hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(164, 139, 190, 0.4);
+    box-shadow: 0 6px 20px rgba(91, 138, 122, 0.4);
 }
 
 .btn-secondary {

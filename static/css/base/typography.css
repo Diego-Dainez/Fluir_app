@@ -1,13 +1,29 @@
-/* Tipografia - Type scale Major Third */
+/* Tipografia - Type scale Major Third
+   Option C "Wellness Authority": Lora (headings) + Raleway (body) */
 
-h1, h2, h3, h4, h5, h6 {
-    font-weight: 700;
+body {
+    letter-spacing: 0.01em;
+    /* Raleway benefits from very slight letter-spacing */
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-display);
+    font-weight: 600;
     line-height: 1.3;
     color: var(--text-900);
+    letter-spacing: -0.01em;
+    /* Lora serifs look best slightly tightened */
 }
 
 h1 {
     font-size: var(--font-size-3xl);
+    font-weight: 700;
+    line-height: 1.2;
 }
 
 h2 {
@@ -32,4 +48,12 @@ h6 {
 
 .font-mono {
     font-family: var(--font-mono);
+}
+
+.font-display {
+    font-family: var(--font-display);
+}
+
+.font-serif {
+    font-family: var(--font-serif);
 }

@@ -4,169 +4,660 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fluir | Pesquisa, análise e recomendações em um clique</title>
-    <meta name="description" content="Diagnóstico psicossocial para sua empresa. COPSOQ validado, scores automáticos e recomendações em prosa geradas por IA. Sem planilhas, sem trabalho manual.">
+    <title>Fluir | Gestão de Riscos Psicossociais — NR-1 2026</title>
+    <meta name="description"
+        content="Plataforma SaaS para diagnóstico COPSOQ, inventário de riscos, plano de ação auditável e acompanhamento entre ciclos. Adequado à NR-01 2026.">
+    <link rel="icon" href="/favicon.ico" type="image/svg+xml">
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 
 <body class="landing-body">
-    <!-- ────── Header ────── -->
     <header class="landing-header">
         <div class="landing-nav container">
             <a href="/landing" class="landing-logo">
                 <img src="/static/img/fluir_logo.png" alt="Fluir">
                 <span>Fluir</span>
             </a>
-            <a href="/" class="btn btn-ghost">Acesso administrativo</a>
+            <nav class="landing-nav-links">
+                <a href="#plataforma" class="landing-nav-link">Plataforma</a>
+                <a href="#como-funciona" class="landing-nav-link">Como funciona</a>
+                <a href="#faq" class="landing-nav-link">FAQ</a>
+                <a href="/" class="btn btn-ghost">Entrar</a>
+            </nav>
         </div>
     </header>
 
-    <!-- ────── Hero ────── -->
+    <!-- ═══════════════════════════════════════════════════
+         1. HERO — NR-1 / PGRP + Mockup do produto
+         ═══════════════════════════════════════════════════ -->
     <section class="landing-hero">
-        <div class="container landing-hero-inner">
-            <h1 class="landing-hero-title">Pesquisa, análise e recomendações em um clique</h1>
-            <p class="landing-hero-sub">Diagnóstico psicossocial para sua empresa. Sem planilhas, sem trabalho manual. Bem-estar que move resultados.</p>
-            <p class="landing-hero-desc">Gerencie pesquisas COPSOQ por empresa, acompanhe respostas em tempo real e exporte para Excel ou PowerPoint. Dashboards prontos e recomendações geradas por inteligência artificial com base nos resultados.</p>
-            <div class="landing-hero-cta">
-                <a href="#cta" class="btn btn-primary btn-lg" id="ctaPrimary">Solicitar demonstração gratuita</a>
-                <a href="#como-funciona" class="btn btn-outline btn-lg">Ver como funciona</a>
+        <div class="container landing-hero-grid">
+            <div class="landing-hero-content">
+                <div class="hero-badge">NR-01 2026 — Riscos Psicossociais no PGR</div>
+                <h1 class="landing-hero-title">Seu PGR com riscos psicossociais: do diagnóstico ao plano de ação
+                    auditável.</h1>
+            </div>
+
+            <div class="landing-hero-visual">
+                <!-- Countdown Timer -->
+                <div class="hero-countdown" id="heroCountdown">
+                    <span class="countdown-label">Prazo limite para adequação à norma:</span>
+                    <div class="countdown-units">
+                        <div class="countdown-unit">
+                            <span class="countdown-num" id="countDays">--</span>
+                            <span class="countdown-desc">dias</span>
+                        </div>
+                        <span class="countdown-sep">:</span>
+                        <div class="countdown-unit">
+                            <span class="countdown-num" id="countHours">--</span>
+                            <span class="countdown-desc">horas</span>
+                        </div>
+                        <span class="countdown-sep">:</span>
+                        <div class="countdown-unit">
+                            <span class="countdown-num" id="countMin">--</span>
+                            <span class="countdown-desc">min</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-mockup">
+                    <div class="glass-mockup-header">
+                        <span class="dot red"></span>
+                        <span class="dot yellow"></span>
+                        <span class="dot green"></span>
+                    </div>
+                    <div class="glass-mockup-body">
+                        <div class="skeleton-title">Inventário de Riscos — NR-1</div>
+                        <div class="skeleton-table">
+                            <div class="skel-row skel-header">
+                                <span>Fator de Risco</span>
+                                <span>Expostos</span>
+                                <span>Nível</span>
+                                <span>Medida</span>
+                            </div>
+                            <div class="skel-row">
+                                <span>Sobrecarga</span>
+                                <span class="mono">12</span>
+                                <span class="status-dot status-red">Alto</span>
+                                <span class="truncate">Redistribuir tarefas...</span>
+                            </div>
+                            <div class="skel-row">
+                                <span>Baixa autonomia</span>
+                                <span class="mono">8</span>
+                                <span class="status-dot status-yellow">Médio</span>
+                                <span class="truncate">Gestão participativa...</span>
+                            </div>
+                            <div class="skel-row">
+                                <span>Liderança</span>
+                                <span class="mono">5</span>
+                                <span class="status-dot status-green">Baixo</span>
+                                <span class="truncate">Manter feedback 360...</span>
+                            </div>
+                        </div>
+                        <div class="skeleton-alert">
+                            <div class="alert-dot"></div>
+                            <div class="alert-text">
+                                <strong>Plano de Ação</strong>
+                                <span>3 medidas pendentes / 2 concluídas</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-blur-blob"></div>
             </div>
         </div>
     </section>
 
-    <!-- ────── Antes x Depois ────── -->
-    <section class="landing-section landing-before-after">
+    <!-- NEW BOTTOM HERO AREA: Subtitle + CTA as per reference image -->
+    <section class="landing-hero-bottom-area">
         <div class="container">
-            <h2 class="landing-section-title">Antes x Depois</h2>
-            <div class="landing-grid-2">
-                <div class="landing-card card">
-                    <div class="card-body">
-                        <h3 class="landing-card-badge landing-badge-before">Antes</h3>
-                        <p>Planilhas espalhadas, horas calculando médias, textos copiados de um relatório para outro. O diagnóstico de bem-estar vira projeto de meses.</p>
-                    </div>
+            <p class="landing-hero-sub">COPSOQ II automatizado,
+                inventário de riscos estruturado e plano de <br class="md-only"> ação com responsável, prazo e evidência
+                — tudo em um único sistema.</p>
+            <div class="landing-hero-cta">
+                <a href="#cta" class="landing-cta-btn" id="ctaPrimary">
+                    Agendar Demonstração Gratuita
+                    <span class="btn-chevron">›</span>
+                </a>
+                <p class="landing-trust-badge">
+                    <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    Conf. NR-1 (Portaria 1.419/2024) + Resolução CFP 14/2023
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════
+         1.5 METRICS BAR — Prova social numérica
+         ═══════════════════════════════════════════════════ -->
+    <section class="landing-metrics">
+        <div class="container">
+            <div class="metrics-bar">
+                <div class="metric-item">
+                    <span class="metric-num">26</span>
+                    <span class="metric-label">dimensões psicossociais mapeadas pelo COPSOQ II</span>
                 </div>
-                <div class="landing-card card">
-                    <div class="card-body">
-                        <h3 class="landing-card-badge landing-badge-after">Depois</h3>
-                        <p>Uma pesquisa por empresa. Um link para os colaboradores. Em minutos, você tem os scores por dimensão, os KPIs e um relatório em PowerPoint com recomendações prontas para apresentar.</p>
+                <div class="metric-divider"></div>
+                <div class="metric-item">
+                    <span class="metric-num">&lt; 15 min</span>
+                    <span class="metric-label">tempo médio de resposta por colaborador</span>
+                </div>
+                <div class="metric-divider"></div>
+                <div class="metric-item">
+                    <span class="metric-num">100%</span>
+                    <span class="metric-label">aderente ao Guia de Informações do MTE</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════
+         2. CONTEXTO NR-1 — Por que isso importa em 2026
+         ═══════════════════════════════════════════════════ -->
+    <section class="landing-section landing-compliance">
+        <div class="container">
+            <h2 class="landing-section-title">Por que sua empresa precisa agir antes de maio/2026</h2>
+            <div class="compliance-grid">
+                <div class="compliance-card">
+                    <div class="compliance-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        </svg>
+                    </div>
+                    <h3>Obrigatório no PGR</h3>
+                    <p>A NR-1 (Portaria 1.419/2024) exige que riscos psicossociais sejam mapeados, avaliados e
+                        controlados no mesmo nível dos riscos físicos e químicos.</p>
+                </div>
+                <div class="compliance-card">
+                    <div class="compliance-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 8v4l3 3" />
+                        </svg>
+                    </div>
+                    <h3>Prazo: 26/05/2026</h3>
+                    <p>Apenas 18% das empresas brasileiras atualizaram seu PGR até hoje. Multas variam de R$ 1.610 a R$
+                        6.708 por infração identificada.</p>
+                </div>
+                <div class="compliance-card">
+                    <div class="compliance-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                        </svg>
+                    </div>
+                    <h3>Documentação auditável</h3>
+                    <p>A fiscalização exige inventário de riscos, plano de ação com responsável e prazo, e evidências de
+                        efetividade — não aceita apenas "relatórios genéricos".</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════
+         2.5 POR QUE COPSOQ II — Defesa metodológica
+         ═══════════════════════════════════════════════════ -->
+    <section class="landing-section landing-methodology" id="metodologia">
+        <div class="container">
+            <h2 class="landing-section-title">Por que o Fluir usa o COPSOQ II?</h2>
+            <p class="landing-section-sub">A NR-1 não define um questionário específico, mas exige base técnica,
+                classificação de nível de risco e rastreabilidade para auditoria. Nem toda ferramenta atende.</p>
+
+            <div class="methodology-table-wrapper">
+                <table class="methodology-table">
+                    <thead>
+                        <tr>
+                            <th>Critério NR-1</th>
+                            <th class="meth-highlight">COPSOQ II</th>
+                            <th>HSE (Britânico)</th>
+                            <th>JSS / Karasek</th>
+                            <th>Pesquisa de Clima</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Validação científica internacional</td>
+                            <td class="meth-highlight"><span class="meth-yes">Sim</span></td>
+                            <td><span class="meth-yes">Sim</span></td>
+                            <td><span class="meth-partial">Parcial</span></td>
+                            <td><span class="meth-no">Não</span></td>
+                        </tr>
+                        <tr>
+                            <td>Cobre 26 dimensões psicossociais</td>
+                            <td class="meth-highlight"><span class="meth-yes">Sim</span></td>
+                            <td><span class="meth-no">6 apenas</span></td>
+                            <td><span class="meth-no">3 apenas</span></td>
+                            <td><span class="meth-no">Variável</span></td>
+                        </tr>
+                        <tr>
+                            <td>Classificação de nível de risco</td>
+                            <td class="meth-highlight"><span class="meth-yes">Sim</span></td>
+                            <td><span class="meth-yes">Sim</span></td>
+                            <td><span class="meth-partial">Parcial</span></td>
+                            <td><span class="meth-no">Não</span></td>
+                        </tr>
+                        <tr>
+                            <td>Gera Inventário de Riscos (NR-1)</td>
+                            <td class="meth-highlight"><span class="meth-yes">Sim</span></td>
+                            <td><span class="meth-partial">Parcial</span></td>
+                            <td><span class="meth-no">Não</span></td>
+                            <td><span class="meth-no">Não</span></td>
+                        </tr>
+                        <tr>
+                            <td>Aceito pelo MTE e literatura SST</td>
+                            <td class="meth-highlight"><span class="meth-yes">Sim</span></td>
+                            <td><span class="meth-partial">Parcial</span></td>
+                            <td><span class="meth-partial">Parcial</span></td>
+                            <td><span class="meth-no">Não</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="methodology-footnote">Fontes: Guia de Informações sobre Fatores de Riscos Psicossociais
+                Relacionados ao Trabalho (MTE, 2024); COPSOQ International Network.</p>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════
+         3. PLATAFORMA — O que o Fluir entrega
+         ═══════════════════════════════════════════════════ -->
+    <section class="landing-section landing-platform" id="plataforma">
+        <div class="container">
+            <h2 class="landing-section-title">Tudo que você precisa para estar em conformidade com a NR-1 em uma única
+                plataforma</h2>
+            <p class="landing-section-sub">Do diagnóstico ao plano de ação concluído, sem planilhas intermediárias.</p>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-num">01</div>
+                    <h3>Diagnóstico COPSOQ II</h3>
+                    <p>Questionário validado com 26 dimensões psicossociais. Multi-nível (I, II, III). Link exclusivo
+                        por empresa, respostas anônimas e automáticas.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-num">02</div>
+                    <h3>Inventário de Riscos (NR-1)</h3>
+                    <p>Tabela estruturada gerada automaticamente: fator de risco, metodologia, expostos, nível e medida
+                        sugerida. Pronta para auditoria do MTE.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-num">03</div>
+                    <h3>Plano de Ação Auditável</h3>
+                    <p>Cada medida tem responsável, prazo e status (PDCA). O RH marca "concluído" e registra evidência
+                        de efetividade direto na plataforma.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-num">04</div>
+                    <h3>Recomendações por IA</h3>
+                    <p>A IA gera recomendações em tópicos usando terminologia do Guia MTE. Priorizadas por urgência.
+                        Focadas em mudança organizacional, não individual.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-num">05</div>
+                    <h3>Multi-tenant SaaS</h3>
+                    <p>Cada empresa em ambiente isolado. Login individual, dados segregados, painel exclusivo. Nenhum
+                        dado compartilhado entre organizações.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-num">06</div>
+                    <h3>Export Executivo</h3>
+                    <p>Dashboard em PowerPoint para diretoria. Excel com inventário NR-1 para SESMT. Plano de ação
+                        exportável para auditoria.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════
+         3.5 IA — Destaque isolado do módulo de IA
+         ═══════════════════════════════════════════════════ -->
+    <section class="landing-section landing-ai-showcase">
+        <div class="container">
+            <div class="ai-layout">
+                <div class="ai-content">
+                    <div class="hero-badge"
+                        style="background: rgba(212, 175, 55, 0.12); border-color: rgba(212, 175, 55, 0.3); color: var(--text-900);">
+                        Exclusivo Fluir</div>
+                    <h2 class="delta-title">Recomendações geradas por IA</h2>
+                    <p class="delta-sub">Enquanto outras plataformas entregam apenas gráficos para você interpretar
+                        sozinho, o Fluir gera automaticamente recomendações objetivas usando terminologia do Guia MTE,
+                        priorizadas por urgência e prontas para o plano de ação.</p>
+                    <ul class="ai-diff-list">
+                        <li>
+                            <span class="ai-diff-icon">Outros</span>
+                            <span>"A dimensão Sobrecarga apresentou nível alto."</span>
+                        </li>
+                        <li>
+                            <span class="ai-diff-icon ai-diff-fluir">Fluir IA</span>
+                            <span>"Redistribuir tarefas na equipe de Operações, implementar rodízio de funções e revisar
+                                carga horária. Responsável sugerido: Gestor de Área. Prazo: 30 dias."</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="ai-visual">
+                    <div class="glass-mockup glass-mockup-sm">
+                        <div class="glass-mockup-header">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                        </div>
+                        <div class="glass-mockup-body">
+                            <div class="skeleton-title" style="font-size: 1rem;">Recomendações IA — Sobrecarga</div>
+                            <div class="ai-mock-card">
+                                <div class="ai-mock-priority">Urgência Alta</div>
+                                <p class="ai-mock-text">Redistribuir volume de tarefas na equipe de Operações.
+                                    Implementar rodízio de funções entre setores com menor carga.</p>
+                                <div class="ai-mock-meta">
+                                    <span>Responsável: Gestor de Área</span>
+                                    <span>Prazo: 30 dias</span>
+                                </div>
+                            </div>
+                            <div class="ai-mock-card">
+                                <div class="ai-mock-priority ai-mock-medium">Urgência Média</div>
+                                <p class="ai-mock-text">Instituir pausas programadas de 10 min a cada 2h de trabalho
+                                    contínuo.</p>
+                                <div class="ai-mock-meta">
+                                    <span>Responsável: RH</span>
+                                    <span>Prazo: 15 dias</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- ────── Fluxo em 3 passos ────── -->
+    <!-- ═══════════════════════════════════════════════════
+         4. DELTA ENTRE CICLOS — Evolução contínua
+         ═══════════════════════════════════════════════════ -->
+    <section class="landing-section landing-delta">
+        <div class="container">
+            <div class="delta-layout">
+                <div class="delta-content">
+                    <div class="hero-badge"
+                        style="background: rgba(107, 159, 126, 0.15); border-color: rgba(107, 159, 126, 0.3);">Melhoria
+                        Contínua</div>
+                    <h2 class="delta-title">As intervenções do último ciclo funcionaram?</h2>
+                    <p class="delta-sub">O Fluir compara automaticamente cada ciclo de aplicação do COPSOQ. Você enxerga
+                        o que melhorou, o que estagnou e o que piorou — com dados, não com achismo.</p>
+                    <ul class="delta-list">
+                        <li>
+                            <span class="delta-arrow up">+18%</span>
+                            <span>Liderança e Gestão melhorou após treinamento de líderes</span>
+                        </li>
+                        <li>
+                            <span class="delta-arrow neutral">0%</span>
+                            <span>Exigências Quantitativas estável — monitorar no próximo ciclo</span>
+                        </li>
+                        <li>
+                            <span class="delta-arrow down">-12%</span>
+                            <span>Conflito Trabalho/Família piorou — ação imediata recomendada</span>
+                        </li>
+                    </ul>
+                    <p class="delta-footnote">Seletor de ciclo no dashboard permite navegar por qualquer período de
+                        aplicação.</p>
+                </div>
+                <div class="delta-visual">
+                    <div class="glass-mockup glass-mockup-sm">
+                        <div class="glass-mockup-header">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                        </div>
+                        <div class="glass-mockup-body">
+                            <div class="skeleton-title" style="font-size: 1rem;">Painel Delta — Ciclo 2 vs Ciclo 1</div>
+                            <div class="delta-bars">
+                                <div class="delta-bar-row">
+                                    <span class="delta-label">Liderança</span>
+                                    <div class="delta-bar-track">
+                                        <div class="delta-bar-fill green" style="width: 72%;"></div>
+                                    </div>
+                                    <span class="delta-val green-text">+18%</span>
+                                </div>
+                                <div class="delta-bar-row">
+                                    <span class="delta-label">Exigências</span>
+                                    <div class="delta-bar-track">
+                                        <div class="delta-bar-fill neutral" style="width: 50%;"></div>
+                                    </div>
+                                    <span class="delta-val">0%</span>
+                                </div>
+                                <div class="delta-bar-row">
+                                    <span class="delta-label">Trabalho/Fam.</span>
+                                    <div class="delta-bar-track">
+                                        <div class="delta-bar-fill red" style="width: 38%;"></div>
+                                    </div>
+                                    <span class="delta-val red-text">-12%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════
+         5. COMO FUNCIONA — 4 passos do ciclo
+         ═══════════════════════════════════════════════════ -->
     <section class="landing-section" id="como-funciona">
         <div class="container">
-            <h2 class="landing-section-title">Em 3 passos</h2>
+            <h2 class="landing-section-title">Como funciona o ciclo completo</h2>
             <div class="landing-steps">
                 <div class="landing-step">
                     <span class="landing-step-num">1</span>
-                    <h3>Crie</h3>
-                    <p>Informe o nome da empresa e gere a pesquisa em segundos. Cada organização tem seu próprio link e QR Code.</p>
+                    <h3>Configure</h3>
+                    <p>Crie a pesquisa, escolha o nível COPSOQ e selecione o ciclo de aplicação. Cada empresa tem seu
+                        próprio link e QR Code.</p>
                 </div>
                 <div class="landing-step-arrow" aria-hidden="true"></div>
                 <div class="landing-step">
                     <span class="landing-step-num">2</span>
                     <h3>Colete</h3>
-                    <p>Envie o link aos colaboradores. Eles respondem no celular ou no computador. As respostas entram automaticamente.</p>
+                    <p>Colaboradores respondem de forma anônima, no celular ou desktop. Respostas entram automaticamente
+                        no painel.</p>
                 </div>
                 <div class="landing-step-arrow" aria-hidden="true"></div>
                 <div class="landing-step">
                     <span class="landing-step-num">3</span>
-                    <h3>Analise</h3>
-                    <p>Dashboard pronto com scores por dimensão, indicadores e recomendações. Exporte para Excel ou PPT com um clique.</p>
+                    <h3>Aja</h3>
+                    <p>Dashboard pronto com scores, inventário NR-1 e plano de ação. Atribua responsáveis, prazos e
+                        registre evidências.</p>
+                </div>
+                <div class="landing-step-arrow" aria-hidden="true"></div>
+                <div class="landing-step">
+                    <span class="landing-step-num">4</span>
+                    <h3>Evolua</h3>
+                    <p>No próximo ciclo, o painel de delta mostra a evolução. Prove que as intervenções funcionaram.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- ────── IA e automacao ────── -->
-    <section class="landing-section landing-ia">
+    <!-- ═══════════════════════════════════════════════════
+         6. COMPARAÇÃO REAL — Antes e Depois
+         ═══════════════════════════════════════════════════ -->
+    <section class="landing-section landing-comparison">
         <div class="container">
-            <h2 class="landing-section-title">IA que escreve as recomendações por você</h2>
-            <p class="landing-ia-text">O Fluir não só calcula os scores: a IA lê os resultados e redige recomendações em texto corrido. Menos tempo formatando, mais tempo atuando. As sugestões são priorizadas (imediato, curto e médio prazo) para você orientar sua estratégia de bem-estar.</p>
-        </div>
-    </section>
-
-    <!-- ────── Beneficios ────── -->
-    <section class="landing-section">
-        <div class="container">
-            <h2 class="landing-section-title">Beneficios</h2>
-            <ul class="landing-benefits">
-                <li><strong>Menos trabalho manual:</strong> cálculo automático de scores e KPIs</li>
-                <li><strong>Relatórios prontos:</strong> export para Excel e PowerPoint em poucos cliques</li>
-                <li><strong>Recomendações em prosa:</strong> texto gerado por IA com base nos resultados</li>
-                <li><strong>Uma pesquisa por empresa:</strong> link e QR Code exclusivos</li>
-                <li><strong>Privacidade:</strong> cada pesquisa isolada, dados organizados e seguros</li>
-            </ul>
-        </div>
-    </section>
-
-    <!-- ────── Prova social ────── -->
-    <section class="landing-section landing-testimonials">
-        <div class="container">
-            <h2 class="landing-section-title">O que dizem os profissionais</h2>
-            <div class="landing-grid-2">
-                <blockquote class="landing-quote card">
-                    <div class="card-body">
-                        <p>"Antes levávamos semanas para fechar um diagnóstico. Com o Fluir, em um dia já temos o relatório na mão."</p>
-                        <cite>— Gestor de RH, empresa de 200 colaboradores</cite>
+            <h2 class="landing-section-title">Resultados reais alcançados</h2>
+            <p class="landing-section-sub">Veja como a gestão de riscos psicossociais vão transformar a sua organização.
+            </p>
+            <div class="comparison-grid">
+                <!-- Case 1 -->
+                <div class="comparison-card">
+                    <div class="comparison-body">
+                        <div class="comparison-side before">
+                            <span class="comparison-badge badge-before">Antes do Fluir</span>
+                            <p>"Diagnóstico longo, que poderia levar semanas, dependendo de planilhas isoladas, com
+                                cruzamentos manuais e fórmulas que consumiam semanas de trabalho."</p>
+                        </div>
+                        <div class="comparison-divider">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7" />
+                            </svg>
+                        </div>
+                        <div class="comparison-side after">
+                            <span class="comparison-badge badge-after">Com o Fluir</span>
+                            <p>"Entrega do inventário NR-1 e o plano de ação pronto no mesmo dia. O trabalho pesado
+                                fica todo por conta do Fluir, liberando o time para ações mais estratégicas."</p>
+                        </div>
                     </div>
-                </blockquote>
-                <blockquote class="landing-quote card">
-                    <div class="card-body">
-                        <p>"As recomendações em PowerPoint economizam horas de escrita. Só ajustamos o tom da apresentação."</p>
-                        <cite>— Consultora em saúde ocupacional</cite>
+                </div>
+
+                <!-- Case 2 -->
+                <div class="comparison-card">
+                    <div class="comparison-body">
+                        <div class="comparison-side before">
+                            <span class="comparison-badge badge-before">Antes do Fluir</span>
+                            <p>"Horas intermináveis montando apresentações manuais do zero e comparando tabelas
+                                gigantescas para entender a evolução entre os ciclos de avaliação."</p>
+                        </div>
+                        <div class="comparison-divider">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7" />
+                            </svg>
+                        </div>
+                        <div class="comparison-side after">
+                            <span class="comparison-badge badge-after">Com o Fluir</span>
+                            <p>"A exportação é feita de forma automática com um clique de um botão. E nela, a IA já
+                                entrega recomendações claras para o plano de ação.
+                                Você deixa de gastar horas investigando dados e passa a agir com direção definida, com
+                                base no que realmente importa."</p>
+                        </div>
                     </div>
-                </blockquote>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- ────── Objeções (FAQ) ────── -->
-    <section class="landing-section landing-faq">
+    <!-- ═══════════════════════════════════════════════════
+         7. CONSULTORIA OPCIONAL
+         ═══════════════════════════════════════════════════ -->
+    <section class="landing-section landing-consulting">
+        <div class="container">
+            <div class="consulting-layout">
+                <div class="consulting-content">
+                    <h2 class="landing-section-title" style="text-align: left;">Precisa de apoio na implantação?</h2>
+                    <p>A plataforma funciona de forma autônoma. Mas se sua equipe precisar de suporte especializado,
+                        oferecemos consultoria opcional para:</p>
+                    <ul class="consulting-list">
+                        <li>Parametrização inicial e onboarding da equipe de RH</li>
+                        <li>Ajuste fino do plano de ação com especialistas em SST</li>
+                        <li>Preparação para auditorias do Ministério do Trabalho</li>
+                        <li>Acompanhamento entre ciclos e análise de evolução</li>
+                    </ul>
+                    <a href="#cta" class="landing-cta-btn landing-cta-btn-outline">
+                        Falar com especialista
+                        <svg class="arrow" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 12l4-4-4-4" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════
+         8. FAQ
+         ═══════════════════════════════════════════════════ -->
+    <section class="landing-section landing-faq" id="faq">
         <div class="container">
             <h2 class="landing-section-title">Perguntas frequentes</h2>
             <div class="landing-faq-list">
                 <div class="landing-faq-item card">
                     <div class="card-body">
-<h3>E os dados? Onde ficam armazenados?</h3>
-                    <p>Cada pesquisa tem dados isolados por empresa. Você controla quem acessa e o que é exportado. Não compartilhamos dados entre clientes.</p>
+                        <h3>O Fluir substitui o PGR da minha empresa?</h3>
+                        <p>Não. O Fluir é a ferramenta de diagnóstico e gestão dos riscos psicossociais que alimenta o
+                            capítulo de riscos psicossociais do seu PGR. Ele gera o inventário e o plano de ação que o
+                            SESMT precisa.</p>
                     </div>
                 </div>
                 <div class="landing-faq-item card">
                     <div class="card-body">
-                        <h3>Parece complicado para eu configurar</h3>
-                        <p>Não exige TI. Crie a pesquisa com nome e código, envie o link e acompanhe no painel. A primeira pesquisa leva menos de 5 minutos.</p>
+                        <h3>Preciso de um psicólogo para usar?</h3>
+                        <p>A NR-1 não define profissão obrigatória. O COPSOQ pode ser aplicado por qualquer profissional
+                            de SST com capacitação. A Resolução CFP 14/2023 regula a atuação específica de psicólogos.
+                        </p>
                     </div>
                 </div>
                 <div class="landing-faq-item card">
                     <div class="card-body">
-                        <h3>E se eu precisar ajustar as perguntas?</h3>
-                        <p>O Fluir usa o questionário COPSOQ (metodologia validada). As dimensões e perguntas vêm configuradas; você só precisa criar a pesquisa e enviar.</p>
+                        <h3>Os dados são isolados por empresa?</h3>
+                        <p>Sim. Cada organização é um tenant independente. Login próprio, banco próprio, painel
+                            exclusivo. Nenhum dado é compartilhado entre clientes.</p>
+                    </div>
+                </div>
+                <div class="landing-faq-item card">
+                    <div class="card-body">
+                        <h3>Como funciona o comparativo entre ciclos?</h3>
+                        <p>A cada nova aplicação do COPSOQ, o Fluir calcula automaticamente a variação (delta) de cada
+                            dimensão em relação ao ciclo anterior. Você enxerga o que melhorou, estabilizou ou piorou.
+                        </p>
                     </div>
                 </div>
                 <div class="landing-faq-item card">
                     <div class="card-body">
                         <h3>Quanto custa?</h3>
-                        <p>Entre em contato para uma demonstração. Mostramos o produto em uso e explicamos os planos disponíveis para sua realidade.</p>
+                        <p>Agende uma demonstração gratuita. Apresentamos a plataforma em uso e explicamos os planos
+                            disponíveis para o tamanho e necessidade da sua organização.</p>
+                    </div>
+                </div>
+                <div class="landing-faq-item card">
+                    <div class="card-body">
+                        <h3>Por que COPSOQ II e não HSE, JSS ou outra ferramenta?</h3>
+                        <p>O COPSOQ II é a metodologia com maior cobertura de dimensões psicossociais (26 no nível
+                            longo), validação internacional e aderência às exigências da NR-1 para inventário de riscos.
+                            Ferramentas como o HSE Stress Indicator Tool cobrem apenas 6 dimensões, e o JSS/Karasek
+                            avalia somente 3 eixos — insuficientes para o nível de detalhe exigido pelo MTE.</p>
+                    </div>
+                </div>
+                <div class="landing-faq-item card">
+                    <div class="card-body">
+                        <h3>Como a IA gera as recomendações?</h3>
+                        <p>A IA analisa os scores de cada dimensão do COPSOQ, cruza com a terminologia do Guia de
+                            Informações do MTE e gera recomendações objetivas com responsável sugerido, prazo e tipo de
+                            intervenção (organizacional, não individual). Não são frases genéricas: cada recomendação é
+                            contextualizada ao resultado da sua empresa.</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- ────── CTA final ────── -->
+    <!-- ═══════════════════════════════════════════════════
+         9. CTA FINAL
+         ═══════════════════════════════════════════════════ -->
     <section class="landing-cta" id="cta">
         <div class="container">
-            <h2 class="landing-cta-title">Pronto para começar?</h2>
-            <p class="landing-cta-sub">Veja o Fluir em ação. Sem compromisso.</p>
-            <a href="mailto:contato@fluir.com.br?subject=Demonstração%20Fluir" class="btn btn-primary btn-lg" id="ctaFinal">Solicitar demonstração gratuita</a>
+            <h2 class="landing-cta-title">Maio de 2026 está chegando. Sua empresa está pronta?</h2>
+            <p class="landing-cta-sub">Agende uma demonstração gratuita e veja como o Fluir organiza o diagnóstico, o
+                inventário e o plano de ação da sua empresa.</p>
+            <a href="mailto:contato@fluir.com.br?subject=Demonstração%20Fluir%20—%20NR-01" class="landing-cta-btn"
+                id="ctaFinal">
+                Agendar Demonstração Gratuita
+                <svg class="arrow" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 12l4-4-4-4" />
+                </svg>
+            </a>
+            <p class="landing-trust-badge" style="justify-content: center; margin-top: var(--space-2);">
+                <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                        clip-rule="evenodd" />
+                </svg>
+                Dados seguros. Sem compromisso. Resposta em até 24h.
+            </p>
         </div>
     </section>
 
-    <!-- ────── Footer ────── -->
     <footer class="landing-footer">
         <div class="container">
             <p>Fluir — Bem-estar que move resultados</p>
@@ -174,7 +665,7 @@
         </div>
     </footer>
 
-    <script src="/static/js/landing.js"></script>
+    <script src="/static/js/landing.js?v=2"></script>
 </body>
 
 </html>
